@@ -69,3 +69,39 @@ class DenseLayer:
             neuron(inputs, self.__weights[i])
             for i, neuron in enumerate(self.__neurons)
         ])
+
+class DenseNetwork:
+    """
+    A class representing a dense neural network.
+
+    Attributes:
+        layers: The layers in the network.
+        optimizer: The optimizer used for updating the network weights.
+        loss_function: The loss function used for training.
+
+    Methods:
+        __call__(inputs: numpy.array) -> numpy.array:
+            Compute the output of the Dense Network.
+
+        train(???) -> float:
+            Train the Network.
+
+        evaluate(???) -> float:
+            Evaluate the Network.
+
+    """
+    def __init__(self, num_inputs: int, num_outputs: int, num_hidden_layers: int, num_neurons_per_layer: int, activation_function: DerivableFunction):
+        self.__layers = self.__create_layers(num_inputs, num_outputs, num_hidden_layers, num_neurons_per_layer, activation_function)
+
+    def __create_layers(self, num_inputs: int, num_outputs: int, num_hidden_layers: int, num_neurons_per_layer: int, activation_function: DerivableFunction) -> list:
+        layers = [
+            DenseLayer(num_neurons_per_layer, activation_function)
+            for _ in range(0, num_hidden_layers)
+        ]
+        layers.append(DenseLayer(num_outputs, activation_function))
+        return layers
+
+    def __call__(self, inputs: numpy.array) -> numpy.array:
+        for layer in self.__layers:
+            inputs = layer(inputs)
+        return inputs
