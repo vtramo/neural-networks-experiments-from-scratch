@@ -1,4 +1,4 @@
-from .actfun import DerivableFunction
+from .actfun import DerivableFunction, IdentityFunction
 import numpy
 
 
@@ -13,7 +13,7 @@ class Neuron:
         __call__(x, w) -> numpy.array: Compute the output of the neuron given the input and weights.
     """
 
-    def __init__(self, activation_function: DerivableFunction):
+    def __init__(self, activation_function: DerivableFunction = IdentityFunction()):
         self.__activation_function = activation_function
 
     @property
@@ -39,7 +39,7 @@ class DenseLayer:
 
     """
 
-    def __init__(self, num_neurons: int, activation_function: DerivableFunction):
+    def __init__(self, num_neurons: int, activation_function: DerivableFunction = IdentityFunction()):
         self.__activation_function = activation_function
         self.__weights = None
         self.__create_neurons(num_neurons)
