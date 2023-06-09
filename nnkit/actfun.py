@@ -46,3 +46,14 @@ class SigmoidActivationFunction(DerivableFunction):
     def derivative(self, x: numpy.array) -> numpy.array:
         sigma_x = self(x)
         return sigma_x * (1 - sigma_x)
+
+
+class IdentityFunction(DerivableFunction):
+    def __init__(self):
+        super().__init__()
+
+    def __call__(self, x: float) -> float:
+        return x
+
+    def derivative(self, x: float) -> float:
+        return 1
