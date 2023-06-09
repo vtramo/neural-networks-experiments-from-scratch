@@ -5,16 +5,16 @@ This repository contains code for creating and training neural networks using on
 ## Usage example
 
 ```python
-from nnkit import Neuron, SigmoidActivationFunction, DenseLayer
+from nnkit import Neuron, SigmoidLogisticFunction, DenseLayer
 import numpy as np
 
-actfun = SigmoidActivationFunction()
-neuron = Neuron(activation_function=actfun)
+sigmoid = SigmoidLogisticFunction()
+neuron = Neuron(activation_function=sigmoid)
 
 x = np.array([1, 2, 3])
 w = np.array([1, 2, 3])
 output = neuron(x, w)
 
-layer = DenseLayer(10, activation_function=actfun)
+layer = DenseLayer(10, activation_function=sigmoid)
 layer_output = layer(x)
 ```

@@ -10,7 +10,7 @@ class Neuron:
         activation_function: The activation function used by the neuron.
 
     Methods:
-        __call__(x, w) -> numpy.array: Compute the output of the neuron given the input and weights.
+        __call__(x, w) -> float: Compute the output of the neuron given the input and weights.
     """
 
     def __init__(self, activation_function: DerivableFunction = IdentityFunction()):
@@ -20,7 +20,7 @@ class Neuron:
     def activation_function(self) -> DerivableFunction:
         return self.__activation_function
 
-    def __call__(self, x: numpy.array, w: numpy.array) -> numpy.array:
+    def __call__(self, x: numpy.array, w: numpy.array) -> float:
         a = numpy.dot(x, w)
         return self.__activation_function(a)
 
