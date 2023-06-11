@@ -22,7 +22,3 @@ class CrossEntropy(LossFunction):
     def output_derivative(self, prediction: numpy.array, gold_label: numpy.array) -> numpy.array:
         return -(gold_label / prediction)
 
-
-def softmax(y: numpy.array) -> numpy.array:
-    exp_y = numpy.exp(y)
-    return exp_y / numpy.sum(exp_y)

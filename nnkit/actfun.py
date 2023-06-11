@@ -69,3 +69,27 @@ class Identity(DerivableFunction):
 
     def derivative(self, x: float) -> float:
         return 1
+
+
+class Softmax(DerivableFunction):
+    """
+    A class representing the Softmax function, which calculates the probabilities of the given inputs.
+
+    Inherits from the DerivableFunction class.
+
+    Methods:
+        __init__(): Initializes the Softmax object.
+        __call__(y: numpy.array) -> numpy.array: Calculates the probabilities using the Softmax function.
+        derivative(x: float) -> float: Raises a NotImplementedError.
+
+    """
+
+    def __init__(self):
+        super().__init__()
+
+    def __call__(self, y: numpy.array) -> numpy.array:
+        exp_y = numpy.exp(y)
+        return exp_y / numpy.sum(exp_y)
+
+    def derivative(self, x: float) -> float:
+        raise NotImplementedError
