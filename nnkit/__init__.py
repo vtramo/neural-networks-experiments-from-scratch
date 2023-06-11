@@ -1,3 +1,3 @@
-from .actfun import SigmoidLogisticFunction
-from .neuronet import Neuron, DenseLayer
-from .lossfun import CrossEntropy, softmax
+from .actfun import Sigmoid, Softmax
+from .neuronet import Neuron, DenseLayer, DenseNetwork
+from .lossfun import CrossEntropy

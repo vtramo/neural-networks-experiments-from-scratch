@@ -24,7 +24,7 @@ class DerivableFunction:
         raise NotImplementedError
 
 
-class SigmoidLogisticFunction(DerivableFunction):
+class Sigmoid(DerivableFunction):
     """
     A class representing the Sigmoid activation function.
 
@@ -55,7 +55,6 @@ class Identity(DerivableFunction):
     Inherits from the DerivableFunction class.
 
     Methods:
-        __init__(): Initializes the IdentityFunction object.
         __call__(x: float) -> float: Returns the input value unchanged.
         derivative(x: float) -> float: Returns the derivative of the identity function, which is always 1.
 
@@ -78,7 +77,6 @@ class Softmax(DerivableFunction):
     Inherits from the DerivableFunction class.
 
     Methods:
-        __init__(): Initializes the Softmax object.
         __call__(y: numpy.array) -> numpy.array: Calculates the probabilities using the Softmax function.
         derivative(x: float) -> float: Raises a NotImplementedError.
 

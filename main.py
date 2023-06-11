@@ -1,17 +1,17 @@
-from nnkit import Neuron, SigmoidActivationFunction, DenseLayer
+from nnkit import Sigmoid, Softmax, DenseLayer, DenseNetwork
 import numpy as np
 
 
 if __name__ == '__main__':
-    actfun = SigmoidActivationFunction()
-    neuron = Neuron(activation_function=actfun)
+    sigmoid = Sigmoid()
+    softmax = Softmax()
 
-    x = np.array([1, 2, 3])
-    w = np.array([1, 2, 3])
-    output = neuron(x, w)
-    print(f"Output neuron: {output}")
-    print(f"Output derivative: {actfun.derivative(output)}")
+    net = DenseNetwork(
+        DenseLayer(num_inputs=5, num_neurons=10, activation_function=sigmoid),
+        DenseLayer(num_neurons=5, activation_function=sigmoid),
+        DenseLayer(num_neurons=4, activation_function=softmax)
+    )
 
-    layer = DenseLayer(10, activation_function=actfun)
-    layer_output = layer(x)
-    print(f"\nlayer_output: \n{layer_output}")
+    x = [1, 2, 3, 4, 5]
+    net_output = net(x)
+    print(f"{net_output}")
