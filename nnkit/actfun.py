@@ -48,7 +48,19 @@ class SigmoidLogisticFunction(DerivableFunction):
         return sigma_x * (1 - sigma_x)
 
 
-class IdentityFunction(DerivableFunction):
+class Identity(DerivableFunction):
+    """
+    A class representing the identity function, which returns the input value unchanged.
+
+    Inherits from the DerivableFunction class.
+
+    Methods:
+        __init__(): Initializes the IdentityFunction object.
+        __call__(x: float) -> float: Returns the input value unchanged.
+        derivative(x: float) -> float: Returns the derivative of the identity function, which is always 1.
+
+    """
+
     def __init__(self):
         super().__init__()
 
