@@ -42,7 +42,8 @@ class DenseLayer:
         self,
         num_neurons: int,
         num_inputs: int = None,
-        activation_function: DerivableFunction = Identity()
+        activation_function: DerivableFunction = Identity(),
+        include_bias: bool = True
     ):
         is_softmax = isinstance(activation_function, Softmax)
         self.__activation_function = Identity() if is_softmax else activation_function
@@ -51,7 +52,7 @@ class DenseLayer:
             Neuron(self.__activation_function)
             for _ in range(0, num_neurons)
         ]
-        self.__weights = self.initialize_weights(num_inputs) if num_inputs is not None else None
+        self.__weights = self.initialize_weights(num_inputs, include_bias) if num_inputs is not None else None
 
     @property
     def weights(self) -> numpy.array:
