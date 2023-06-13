@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from .neuronet import DenseNetwork
+from .lossfun import LossFunction
 
 
 class UpdateRule(object, metaclass=ABCMeta):
@@ -13,16 +14,20 @@ class UpdateRule(object, metaclass=ABCMeta):
 
 
 class Optimizer:
-    def __init__(self, net: DenseNetwork, update_rule: UpdateRule):
+    def __init__(self, net: DenseNetwork, update_rule: UpdateRule, loss_function: LossFunction):
         self.__net = net
         self.__update_rule = update_rule
+        self.__grad = None
 
-    def __call__(self, x: numpy.array, t: numpy.array) -> numpy.array:
-        return self.__optimize(x, t)
-
-    def __optimize(self, x: numpy.array, t: numpy.array) -> numpy.array:
+    def reset_grad(self):
         pass
 
+    def optimize(self, x: numpy.array, t: numpy.array) -> numpy.array:
+        pass
 
-def back_prop():
-    pass
+    def update(self):
+        pass
+
+    def __back_prop(self):
+        (a, y) = self.__net(x)
+

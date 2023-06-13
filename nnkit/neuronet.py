@@ -20,9 +20,10 @@ class Neuron:
     def activation_function(self) -> DerivableFunction:
         return self.__activation_function
 
-    def __call__(self, x: numpy.array, w: numpy.array) -> float:
+    def __call__(self, x: numpy.array, w: numpy.array) -> (float, float):
         a = numpy.dot(x, w)
-        return self.__activation_function(a)
+        z = self.__activation_function(self.__a)
+        return a, z
 
 
 class DenseLayer:
@@ -84,16 +85,18 @@ class DenseLayer:
 
         return self.__weights
 
-    def __forward_pass(self, inputs: numpy.array) -> numpy.array:
+    def __forward_pass(self, inputs: numpy.array) -> numpy.array[(float, float)]:
         if self.__include_bias:
             inputs = numpy.concatenate(([1], inputs))
 
-        output = numpy.array([
-            neuron(inputs, self.__weights[i])
-            for i, neuron in enumerate(self.__neurons)
-        ])
+        output = numpy.array([] * self.num_neurons)
+        for i, neuron in enumerate(self.__neurons):
+            neuron_output = neuron(inputs, self.__weights[i])
+            a = neuron_output[0]
+            z = self.__post_processing(neuron_output[1])
+            output[i] = a, z
 
-        return self.__post_processing(output)
+        return output
 
 
 class DenseNetwork:
@@ -132,15 +135,26 @@ class DenseNetwork:
         return self.__parameters
 
     def __call__(self, x: numpy.array) -> numpy.array:
-        return self.__forward_pass(x)
+        return self.__output(x)
 
-    def __forward_pass(self, x: numpy.array) -> numpy.array:
+    def __output(self, x: numpy.array) -> numpy.array:
         output = x
 
         prev_output = output
         for layer in self.__layers:
             output = layer(prev_output)
             prev_output = output
+
+        return output
+
+    def __forward_pass(self, x: numpy.array) -> numpy.array:
+        output = [] * len(self.__layers)
+
+        prev_output = x
+        for layer in self.__layers:
+            curr_output = layer(prev_output)
+            output.append(curr_output)
+            prev_output = curr_output
 
         return output
 
