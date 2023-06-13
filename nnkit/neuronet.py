@@ -53,6 +53,7 @@ class DenseLayer:
             for _ in range(0, num_neurons)
         ]
         self.__weights = self.initialize_weights(num_inputs, include_bias) if num_inputs is not None else None
+        self.__include_bias = include_bias
 
     @property
     def weights(self) -> numpy.array:
@@ -74,7 +75,7 @@ class DenseLayer:
         return self.__weights is not None
 
     def initialize_weights(self, num_inputs: int, include_bias: bool = True) -> numpy.array:
-        num_neurons = len(self.__neurons)
+        num_neurons = self.num_neurons
 
         self.__weights = numpy.random.rand(
             num_neurons,
@@ -84,7 +85,8 @@ class DenseLayer:
         return self.__weights
 
     def __forward_pass(self, inputs: numpy.array) -> numpy.array:
-        inputs = numpy.concatenate(([1], inputs))
+        if self.__include_bias:
+            inputs = numpy.concatenate(([1], inputs))
 
         output = numpy.array([
             neuron(inputs, self.__weights[i])
