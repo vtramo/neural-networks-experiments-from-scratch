@@ -22,7 +22,7 @@ class Neuron:
 
     def __call__(self, x: numpy.array, w: numpy.array) -> (float, float):
         a = numpy.dot(x, w)
-        z = self.__activation_function(self.__a)
+        z = self.__activation_function(a)
         return a, z
 
 
@@ -30,13 +30,11 @@ class DenseLayer:
     """
     A class representing a dense layer in a neural network.
 
-    Methods:
-        weights: Property that returns the weights of the layer.
-        num_neurons: Property that returns the number of neurons in the layer.
-        __call__(inputs: numpy.array) -> numpy.array: Performs a forward pass through the layer.
-        are_weights_initialised() -> bool: Checks if the weights are initialized.
-        initialize_weights(num_inputs: int, include_bias: bool = True) -> numpy.array: Initializes the weights of the layer.
-        __forward_pass(inputs: numpy.array) -> numpy.array: Performs a forward pass through the neurons in the layer.
+    Methods: weights: Property that returns the weights of the layer. num_neurons: Property that returns the number
+    of neurons in the layer. __call__(inputs: numpy.array) -> numpy.array: Performs a forward pass through the layer.
+    are_weights_initialised() -> bool: Checks if the weights are initialised. initialize_weights(num_inputs: int,
+    include_bias: bool = True) -> numpy.array: Initializes the weights of the layer. __forward_pass(inputs:
+    numpy.array) -> numpy.array: Performs a forward pass through the neurons in the layer.
     """
 
     def __init__(
@@ -56,11 +54,20 @@ class DenseLayer:
         self.__weights = self.initialize_weights(num_inputs, include_bias) if num_inputs is not None else None
         self.__include_bias = include_bias
 
+    def initialize_weights(self, num_inputs: int, include_bias: bool = True) -> numpy.array:
+        return numpy.random.rand(
+            self.num_neurons,
+            num_inputs + include_bias
+        )
+
     @property
     def weights(self) -> numpy.array:
         if not self.are_weights_initialised():
             raise Exception("Weights are not initialized!")
         return self.__weights
+
+    def are_weights_initialised(self) -> bool:
+        return self.__weights is not None
 
     @property
     def num_neurons(self) -> int:
@@ -72,31 +79,18 @@ class DenseLayer:
 
         return self.__forward_pass(inputs)
 
-    def are_weights_initialised(self) -> bool:
-        return self.__weights is not None
-
-    def initialize_weights(self, num_inputs: int, include_bias: bool = True) -> numpy.array:
-        num_neurons = self.num_neurons
-
-        self.__weights = numpy.random.rand(
-            num_neurons,
-            num_inputs + include_bias
-        )
-
-        return self.__weights
-
-    def __forward_pass(self, inputs: numpy.array) -> numpy.array[(float, float)]:
+    def __forward_pass(self, inputs: numpy.array) -> dict[str, numpy.array]:
         if self.__include_bias:
             inputs = numpy.concatenate(([1], inputs))
 
-        output = numpy.array([] * self.num_neurons)
+        a = numpy.empty(self.num_neurons)
+        z = numpy.empty(self.num_neurons)
         for i, neuron in enumerate(self.__neurons):
-            neuron_output = neuron(inputs, self.__weights[i])
-            a = neuron_output[0]
-            z = self.__post_processing(neuron_output[1])
-            output[i] = a, z
+            neuron_output = neuron(inputs, self.weights[i])
+            a[i] = neuron_output[0]
+            z[i] = self.__post_processing(neuron_output[1])
 
-        return output
+        return {'a': a, 'z': z}
 
 
 class DenseNetwork:
@@ -117,8 +111,20 @@ class DenseNetwork:
         self.__layers = layers
         self.__init_parameters(*layers)
 
+    @staticmethod
+    def __check_dense_layers(*layers: DenseLayer) -> None:
+        if len(layers) <= 0:
+            raise Exception("The number of DenseLayers cannot be less than or equal to zero")
+
+        for layer in layers:
+            if not isinstance(layer, DenseLayer):
+                raise TypeError("layers must be DenseLayers")
+
+        if not layers[0].are_weights_initialised():
+            raise Exception("The first DenseLayer must be initialised!")
+
     def __init_parameters(self, *layers: DenseLayer) -> None:
-        self.__parameters = []
+        self.__parameters: list[numpy.array, ...] = []
 
         input_layer = layers[0]
         input_layer_weights = input_layer.weights
@@ -138,35 +144,23 @@ class DenseNetwork:
         return self.__output(x)
 
     def __output(self, x: numpy.array) -> numpy.array:
-        output = x
+        output_last_layer: numpy.array = None
+        prev_output = x
 
-        prev_output = output
         for layer in self.__layers:
-            output = layer(prev_output)
-            prev_output = output
+            output_last_layer = layer(prev_output)['z']
+            prev_output = output_last_layer
 
-        return output
+        return output_last_layer
 
-    def __forward_pass(self, x: numpy.array) -> numpy.array:
+    def __forward_pass(self, x: numpy.array) -> tuple[dict[str, numpy.array], ...]:
         output = [] * len(self.__layers)
 
         prev_output = x
         for layer in self.__layers:
             curr_output = layer(prev_output)
             output.append(curr_output)
-            prev_output = curr_output
+            prev_output = curr_output['z']
 
-        return output
-
-    @staticmethod
-    def __check_dense_layers(*layers: DenseLayer) -> None:
-        if len(layers) <= 0:
-            raise Exception("The number of DenseLayers cannot be less than or equal to zero")
-
-        for layer in layers:
-            if not isinstance(layer, DenseLayer):
-                raise TypeError("layers must be DenseLayers")
-
-        if not layers[0].are_weights_initialised():
-            raise Exception("The first DenseLayer must be initialised!")
+        return tuple(output)
         
