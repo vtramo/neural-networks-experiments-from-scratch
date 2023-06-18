@@ -20,10 +20,16 @@ class Neuron:
     def activation_function(self) -> DerivableFunction:
         return self.__activation_function
 
-    def __call__(self, x: numpy.array, w: numpy.array) -> (float, float):
+    def __call__(self, x: numpy.array, w: numpy.array) -> float:
         a = numpy.dot(x, w)
         z = self.__activation_function(a)
-        return a, z
+        return z
+    
+    def training_output(self, x: numpy.array, w: numpy.array) -> tuple[float, float, float]:
+        a = numpy.dot(x, w)
+        z = self.__activation_function(a)
+        d = self.__activation_function.derivative(a)
+        return a, z, d
 
 
 class DenseLayer:
@@ -55,10 +61,12 @@ class DenseLayer:
         self.__include_bias = include_bias
 
     def initialize_weights(self, num_inputs: int, include_bias: bool = True) -> numpy.array:
-        return numpy.random.rand(
+        rand_weights = numpy.random.rand(
             self.num_neurons,
             num_inputs + include_bias
         )
+        self.__weights = rand_weights
+        return rand_weights
 
     @property
     def weights(self) -> numpy.array:
@@ -79,18 +87,29 @@ class DenseLayer:
 
         return self.__forward_pass(inputs)
 
-    def __forward_pass(self, inputs: numpy.array) -> dict[str, numpy.array]:
+    def __forward_pass(self, inputs: numpy.array) -> numpy.array:
+        if self.__include_bias:
+            inputs = numpy.concatenate(([1], inputs))
+
+        return numpy.array([
+            neuron(inputs, self.weights[i])
+            for i, neuron in enumerate(self.__neurons)
+        ])
+    
+    def training_forward_pass(self, inputs: numpy.array) -> dict[str, numpy.array]:
         if self.__include_bias:
             inputs = numpy.concatenate(([1], inputs))
 
         a = numpy.empty(self.num_neurons)
         z = numpy.empty(self.num_neurons)
+        d = numpy.empty(self.num_neurons)
         for i, neuron in enumerate(self.__neurons):
-            neuron_output = neuron(inputs, self.weights[i])
+            neuron_output = neuron.training_output(inputs, self.weights[i])
             a[i] = neuron_output[0]
-            z[i] = self.__post_processing(neuron_output[1])
+            z[i] = neuron_output[1]
+            d[i] = neuron_output[2]
 
-        return {'a': a, 'z': z}
+        return {'a': a, 'z': self.__post_processing(z), 'd': d}
 
 
 class DenseNetwork:
@@ -148,17 +167,17 @@ class DenseNetwork:
         prev_output = x
 
         for layer in self.__layers:
-            output_last_layer = layer(prev_output)['z']
+            output_last_layer = layer(prev_output)
             prev_output = output_last_layer
 
         return output_last_layer
 
-    def __forward_pass(self, x: numpy.array) -> tuple[dict[str, numpy.array], ...]:
+    def training_forward_pass(self, x: numpy.array, is_learning : bool = True ) -> tuple[dict[str, numpy.array], ...]:
         output = [] * len(self.__layers)
 
         prev_output = x
         for layer in self.__layers:
-            curr_output = layer(prev_output)
+            curr_output = layer.training_forward_pass(prev_output)
             output.append(curr_output)
             prev_output = curr_output['z']
 
