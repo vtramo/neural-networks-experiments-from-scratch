@@ -1,3 +1,4 @@
+import pprint
 from nnkit import Sigmoid, Softmax, DenseLayer, DenseNetwork
 import numpy as np
 
@@ -14,4 +15,9 @@ if __name__ == '__main__':
 
     x = [1, 2, 3, 4, 5]
     net_output = net(x)
+    net_forward_pass = net.training_forward_pass(x)
     print(f"{net_output}")
+    print(f"{net_forward_pass}")
+        
+    
+
