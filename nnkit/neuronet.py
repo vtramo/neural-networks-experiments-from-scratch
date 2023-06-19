@@ -161,6 +161,10 @@ class DenseNetwork:
     def parameters(self) -> list:
         return self.__parameters
 
+    @property
+    def depth(self) -> int:
+        return len(self.__layers)
+
     def __call__(self, x: numpy.array) -> numpy.array:
         return self.__output(x)
 
