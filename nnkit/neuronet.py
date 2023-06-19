@@ -44,11 +44,11 @@ class DenseLayer:
     """
 
     def __init__(
-        self,
-        num_neurons: int,
-        num_inputs: int = None,
-        activation_function: DerivableFunction = Identity(),
-        include_bias: bool = True
+            self,
+            num_neurons: int,
+            num_inputs: int = None,
+            activation_function: DerivableFunction = Identity(),
+            include_bias: bool = True
     ):
         is_softmax = isinstance(activation_function, Softmax)
         self.__activation_function = Identity() if is_softmax else activation_function
@@ -91,11 +91,13 @@ class DenseLayer:
         if self.__include_bias:
             inputs = numpy.concatenate(([1], inputs))
 
-        return numpy.array([
+        output = numpy.array([
             neuron(inputs, self.weights[i])
             for i, neuron in enumerate(self.__neurons)
         ])
-    
+
+        return self.__post_processing(output)
+
     def training_forward_pass(self, inputs: numpy.array) -> dict[str, numpy.array]:
         if self.__include_bias:
             inputs = numpy.concatenate(([1], inputs))
