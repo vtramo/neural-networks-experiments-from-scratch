@@ -178,7 +178,7 @@ class DenseNetwork:
 
         return output_last_layer
 
-    def training_forward_pass(self, x: numpy.array, is_learning : bool = True ) -> tuple[dict[str, numpy.array], ...]:
+    def training_forward_pass(self, x: numpy.array) -> tuple[dict[str, numpy.array], ...]:
         output = [] * len(self.__layers)
 
         prev_output = x
