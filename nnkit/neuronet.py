@@ -3,16 +3,6 @@ import numpy
 
 
 class Neuron:
-    """
-    A class representing a single neuron in a neural network.
-
-    Attributes:
-        activation_function: The activation function used by the neuron.
-
-    Methods:
-        __call__(x, w) -> float: Compute the output of the neuron given the input and weights.
-    """
-
     def __init__(self, activation_function: DerivableFunction = Identity()):
         self.__activation_function = activation_function
 
@@ -33,16 +23,6 @@ class Neuron:
 
 
 class DenseLayer:
-    """
-    A class representing a dense layer in a neural network.
-
-    Methods: weights: Property that returns the weights of the layer. num_neurons: Property that returns the number
-    of neurons in the layer. __call__(inputs: numpy.array) -> numpy.array: Performs a forward pass through the layer.
-    are_weights_initialised() -> bool: Checks if the weights are initialised. initialize_weights(num_inputs: int) ->
-    numpy.array: Initializes the weights of the layer. __forward_pass(inputs:
-    numpy.array) -> numpy.array: Performs a forward pass through the neurons in the layer.
-    """
-
     def __init__(
         self,
         num_neurons: int,
@@ -111,18 +91,6 @@ class DenseLayer:
 
 
 class DenseNetwork:
-    """
-    A class representing a dense neural network composed of DenseLayer objects.
-
-    Methods:
-        __init_parameters(*layers: DenseLayer) -> None: Initializes the parameters of the network.
-        parameters: Property that returns the parameters of the network.
-        __call__(x: numpy.array) -> numpy.array: Performs a forward pass through the network.
-        __forward_pass(x: numpy.array) -> numpy.array: Performs a forward pass through the layers of the network.
-        __check_dense_layers(*layers: DenseLayer) -> None: Checks if the provided layers are of type DenseLayer.
-
-    """
-    
     def __init__(self, *layers: DenseLayer):
         DenseNetwork.__check_dense_layers(*layers)
         self.__layers = layers
