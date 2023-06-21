@@ -89,6 +89,7 @@ class DenseLayer:
 
 
 class DenseNetwork:
+
     def __init__(self, *layers: DenseLayer):
         DenseNetwork.__check_dense_layers(*layers)
         self.__layers = layers
