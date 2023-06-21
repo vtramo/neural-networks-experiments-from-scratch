@@ -51,6 +51,9 @@ class DenseLayer:
         if not self.are_weights_initialised():
             raise Exception("Weights are not initialized!")
         return self.__weights
+    
+    def set_weights(self, weights: numpy.array):
+        self.__weights = weights
 
     def are_weights_initialised(self) -> bool:
         return self.__weights is not None
@@ -124,6 +127,11 @@ class DenseNetwork:
     @property
     def parameters(self) -> list:
         return self.__parameters
+    
+    def set_parameters(self, new_parameters: list) -> None:
+        self.__parameters = new_parameters
+        for layer, new_params in zip(self.__layers, new_parameters):
+            layer.set_weights(new_params)
 
     @property
     def depth(self) -> int:
