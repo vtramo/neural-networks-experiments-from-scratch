@@ -6,7 +6,7 @@ import numpy as np
 
 class UpdateRule(object, metaclass=ABCMeta):
 
-    def __init__(self, parameters: np.ndarray, learning_rate: float = 0.5):
+    def __init__(self, parameters: np.ndarray, learning_rate: float = 0.01):
         self.__parameters = parameters
         self.__learning_rate = learning_rate
 
