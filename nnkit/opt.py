@@ -1,39 +1,39 @@
-from abc import ABCMeta, abstractmethod
-
-import numpy
-
 from .neuronet import DenseNetwork
 from .lossfun import LossFunction
+from abc import ABCMeta, abstractmethod
+import numpy as np
 
 
 class UpdateRule(object, metaclass=ABCMeta):
-    @abstractmethod
-    def __init__(self, parameters: numpy.array, learning_rate: float = 10):
+
+    def __init__(self, parameters: np.ndarray, learning_rate: float = 0.5):
         self.__parameters = parameters
         self.__learning_rate = learning_rate
 
-    def __call__(self) -> numpy.array:
-        raise NotImplementedError
+    @abstractmethod
+    def __call__(self) -> np.ndarray:
+        pass
 
 
 class Optimizer:
+
     def __init__(self, net: DenseNetwork, update_rule: UpdateRule, loss_function: LossFunction):
         self.__net = net
         self.__update_rule = update_rule
         self.__loss_function = loss_function
-        self.__gradient = []
+        self.__gradient = np.zeros(net.parameters.shape, dtype=object)
 
     def reset_grad(self):
-        self.__gradient = []
+        self.__gradient = np.zeros(net.parameters.shape, dtype=object)
 
-    def optimize(self, x: numpy.array, t: numpy.array) -> numpy.array:
+    def optimize(self, x: np.ndarray, t: np.ndarray) -> np.ndarray:
         pass
 
     def update(self):
         pass
 
 
-def backprop(net: DenseNetwork, loss_function: LossFunction, x: numpy.array, t: numpy.array) -> list:
+def backprop(net: DenseNetwork, loss_function: LossFunction, x: np.ndarray, t: np.ndarray) -> np.ndarray:
     net_output = net.training_forward_pass(x)
     net_parameters = net.parameters
 
@@ -45,31 +45,32 @@ def backprop(net: DenseNetwork, loss_function: LossFunction, x: numpy.array, t: 
     delta_last_layer = der_lossfun * der_actfun_last_layer
 
     # Delta Hidden Layers
-    delta = [delta_last_layer]
+    delta_layers = np.zeros(net.depth, dtype=object)
+    delta_layers[net.depth - 1] = delta_last_layer
     for index_layer in reversed(range(0, net.depth - 1)):
         parameters_next_layer = net_parameters[index_layer + 1]
 
         # remove bias
-        weights_next_layer = numpy.array([
+        weights_next_layer = np.array([
             parameters_next_layer[i][1:]
             for i in range(0, len(parameters_next_layer))
         ])
 
         net_output_curr_layer = net_output[index_layer]
         der_actfun_curr_layer = net_output_curr_layer['d']
-        delta_next_layer = delta[0]
-        delta_curr_layer = der_actfun_curr_layer * numpy.matmul(weights_next_layer.transpose(), delta_next_layer)
-        delta.insert(0, delta_curr_layer)
+        delta_next_layer = delta_layers[index_layer + 1]
+        delta_curr_layer = der_actfun_curr_layer * np.matmul(weights_next_layer.transpose(), delta_next_layer)
+        delta_layers[index_layer] = delta_curr_layer
 
     # Compute gradient
-    gradient = []
+    gradient = np.zeros(net.parameters.shape, dtype=object)
     for index_layer in reversed(range(0, net.depth)):
-        delta_curr_layer = delta[index_layer]
+        delta_curr_layer = delta_layers[index_layer]
         output_prev_layer = net_output[index_layer - 1]['z'] if index_layer != 0 else x
-        der = numpy.array([
-            numpy.concatenate(([delta], delta * output_prev_layer))
+        der = np.array([
+            np.concatenate(([delta], delta * output_prev_layer))
             for delta in delta_curr_layer
         ])
-        gradient.insert(0, der)
+        gradient[index_layer] = der
 
     return gradient

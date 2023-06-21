@@ -1,35 +1,29 @@
-import numpy
+import numpy as np
+from abc import ABCMeta, abstractmethod
 
 
-class DerivableFunction:
+class ActivationFunction(object, metaclass=ABCMeta):
 
-    def __init__(self):
+    @abstractmethod
+    def __call__(self, x: np.ndarray) -> np.ndarray:
         pass
 
-    def __call__(self, x: numpy.array) -> numpy.array:
-        raise NotImplementedError
-
-    def derivative(self, x: numpy.array) -> numpy.array:
-        raise NotImplementedError
+    @abstractmethod
+    def derivative(self, x: np.ndarray) -> np.ndarray:
+        pass
 
 
-class Sigmoid(DerivableFunction):
-
-    def __init__(self):
-        super().__init__()
+class Sigmoid(ActivationFunction):
 
     def __call__(self, x: float) -> float:
-        return 1 / (1 + numpy.exp(-x))
+        return 1 / (1 + np.exp(-x))
 
     def derivative(self, x: float) -> float:
         sigma_x = self(x)
         return sigma_x * (1 - sigma_x)
 
 
-class Identity(DerivableFunction):
-
-    def __init__(self):
-        super().__init__()
+class Identity(ActivationFunction):
 
     def __call__(self, x: float) -> float:
         return x
@@ -38,16 +32,13 @@ class Identity(DerivableFunction):
         return 1
 
 
-class Softmax(DerivableFunction):
+class Softmax(ActivationFunction):
 
-    def __init__(self):
-        super().__init__()
-
-    def __call__(self, y: numpy.array) -> numpy.array:
-        exp_y = numpy.exp(y)
-        exp_sum_y = numpy.sum(exp_y)
-        return numpy.array([
-            numpy.exp(y_value) / exp_sum_y
+    def __call__(self, y: np.ndarray) -> np.ndarray:
+        exp_y = np.exp(y)
+        exp_sum_y = np.sum(exp_y)
+        return np.array([
+            np.exp(y_value) / exp_sum_y
             for y_value in y
         ])
 
