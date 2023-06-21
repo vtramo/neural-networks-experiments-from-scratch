@@ -33,7 +33,7 @@ class Optimizer:
         pass
 
 
-def backprop(net: DenseNetwork, loss_function: LossFunction, x: numpy.array, t: numpy.array) -> numpy.array:
+def backprop(net: DenseNetwork, loss_function: LossFunction, x: numpy.array, t: numpy.array) -> list:
     net_output = net.training_forward_pass(x)
     net_parameters = net.parameters
 
@@ -66,10 +66,10 @@ def backprop(net: DenseNetwork, loss_function: LossFunction, x: numpy.array, t: 
     for index_layer in reversed(range(0, net.depth)):
         delta_curr_layer = delta[index_layer]
         output_prev_layer = net_output[index_layer - 1]['z'] if index_layer != 0 else x
-        der = [
+        der = numpy.array([
             numpy.concatenate(([delta], delta * output_prev_layer))
             for delta in delta_curr_layer
-        ]
+        ])
         gradient.insert(0, der)
 
     return gradient
