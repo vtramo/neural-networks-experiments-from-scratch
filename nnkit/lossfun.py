@@ -16,7 +16,7 @@ class LossFunction(object, metaclass=ABCMeta):
 class CrossEntropy(LossFunction):
 
     def __call__(self, prediction: np.ndarray, gold_label: np.ndarray) -> float:
-        return -np.sum(prediction * np.log(gold_label))
+        return -np.sum(gold_label * np.log(prediction))
 
     def output_derivative(self, prediction: np.ndarray, gold_label: np.ndarray) -> np.ndarray:
         return (prediction - gold_label) / (prediction * (1 - prediction))
