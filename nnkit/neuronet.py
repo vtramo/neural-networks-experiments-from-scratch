@@ -7,10 +7,6 @@ class Neuron:
     def __init__(self, activation_function: ActivationFunction = Identity()):
         self.__activation_function = activation_function
 
-    @property
-    def activation_function(self) -> ActivationFunction:
-        return self.__activation_function
-
     def __call__(self, x: np.ndarray, w: np.ndarray) -> float:
         a = np.dot(x, w)
         z = self.__activation_function(a)
