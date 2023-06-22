@@ -119,10 +119,10 @@ class DenseNetwork:
         return self.__parameters
 
     @parameters.setter
-    def parameters(self, new_parameters: np.ndarray):
-        self.__parameters = new_parameters
-        for layer, new_params in zip(self.__layers, new_parameters):
-            layer.weights = new_params
+    def parameters(self, parameters: np.ndarray):
+        self.__parameters = parameters
+        for layer, layer_params in zip(self.__layers, parameters):
+            layer.weights = layer_params
 
     @property
     def depth(self) -> int:
