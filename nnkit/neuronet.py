@@ -1,4 +1,5 @@
 from .actfun import ActivationFunction, Identity, Softmax
+from .lossfun import LossFunction
 import numpy as np
 
 
@@ -149,4 +150,45 @@ class DenseNetwork:
             prev_layer_output = layer_training_output['z']
 
         return tuple(training_output)
+
+    def backprop(self, loss_function: LossFunction, x: np.ndarray, t: np.ndarray) -> np.ndarray:
+        net_output = self.training_forward_pass(x)
+
+        # Delta Output layer
+        net_output_last_layer = net_output[-1]
+        output_last_layer = net_output_last_layer['z']
+        der_actfun_last_layer = net_output_last_layer['d']
+        der_lossfun = loss_function.output_derivative(output_last_layer, t)
+        delta_last_layer = der_lossfun * der_actfun_last_layer
+
+        # Delta Hidden Layers
+        delta_layers = np.zeros(self.depth, dtype=object)
+        delta_layers[self.depth - 1] = delta_last_layer
+        for index_layer in reversed(range(0, self.depth - 1)):
+            parameters_next_layer = self.parameters[index_layer + 1]
+
+            # remove bias
+            weights_next_layer = np.array([
+                parameters_next_layer[i][1:]
+                for i in range(0, len(parameters_next_layer))
+            ])
+
+            net_output_curr_layer = net_output[index_layer]
+            der_actfun_curr_layer = net_output_curr_layer['d']
+            delta_next_layer = delta_layers[index_layer + 1]
+            delta_curr_layer = der_actfun_curr_layer * np.matmul(weights_next_layer.transpose(), delta_next_layer)
+            delta_layers[index_layer] = delta_curr_layer
+
+        # Compute gradient
+        gradient = np.zeros(self.parameters.shape, dtype=object)
+        for index_layer in reversed(range(0, self.depth)):
+            delta_curr_layer = delta_layers[index_layer]
+            output_prev_layer = net_output[index_layer - 1]['z'] if index_layer != 0 else x
+            gradient_curr_layer = np.array([
+                np.concatenate(([delta], delta * output_prev_layer))
+                for delta in delta_curr_layer
+            ])
+            gradient[index_layer] = gradient_curr_layer
+
+        return gradient
         

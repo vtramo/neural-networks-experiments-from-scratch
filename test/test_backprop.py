@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from nnkit import DenseNetwork, DenseLayer, ReLU, Softmax, backprop, CrossEntropySoftmax
+from nnkit import DenseNetwork, DenseLayer, ReLU, Softmax, CrossEntropySoftmax
 
 
 class TestBackprop(unittest.TestCase):
@@ -39,7 +39,7 @@ class TestBackprop(unittest.TestCase):
                       [-5.00108726e-01, -5.31624154e-05, 0, 0]])
         ]
 
-        gradient = backprop(self.net, self.loss, self.x, self.t)
+        gradient = self.net.backprop(self.loss, self.x, self.t)
 
         for gradient_layer, expected_gradient_layer in zip(gradient, expected_gradient):
             np.testing.assert_almost_equal(gradient_layer, expected_gradient_layer)
