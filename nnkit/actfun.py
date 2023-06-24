@@ -35,9 +35,9 @@ class Identity(ActivationFunction):
 class Softmax(ActivationFunction):
 
     def __call__(self, a: np.ndarray) -> np.ndarray:
-        a -= np.max(a, axis=-1, keepdims=True)
+        a -= np.max(a)
         exp_a = np.exp(a)
-        return exp_a / np.sum(exp_a, axis=-1, keepdims=True)
+        return exp_a / np.sum(exp_a)
 
     def derivative(self, a: float) -> float:
         raise NotImplementedError
