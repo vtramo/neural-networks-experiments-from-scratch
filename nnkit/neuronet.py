@@ -34,7 +34,7 @@ class DenseLayer:
         self.__weights = self.initialize_weights(num_inputs) if num_inputs is not None else None
 
     def initialize_weights(self, num_inputs: int) -> np.ndarray:
-        self.__weights = np.random.rand(self.num_neurons, num_inputs + 1)
+        self.__weights = np.random.normal(size=(self.num_neurons, num_inputs + 1)) * 0.001
         return self.__weights
 
     @property
@@ -105,10 +105,10 @@ class DenseNetwork:
             raise Exception("The first DenseLayer must be initialised!")
 
     def __init_parameters(self, *layers: DenseLayer) -> None:
-        input_layer = layers[0]
-        self.__parameters[0] = input_layer.weights
+        first_layer = layers[0]
+        self.__parameters[0] = first_layer.weights
 
-        prev_layer = input_layer
+        prev_layer = first_layer
         for index_layer, layer in enumerate(layers[1:], start=1):
             layer_weights = layer.initialize_weights(prev_layer.num_neurons)
             self.__parameters[index_layer] = layer_weights
@@ -121,8 +121,8 @@ class DenseNetwork:
     @parameters.setter
     def parameters(self, parameters: np.ndarray):
         self.__parameters = parameters
-        for layer, layer_params in zip(self.__layers, parameters):
-            layer.weights = layer_params
+        for layer, layer_weights in zip(self.__layers, parameters):
+            layer.weights = layer_weights
 
     @property
     def depth(self) -> int:
@@ -132,23 +132,21 @@ class DenseNetwork:
         return self.__output(x)
 
     def __output(self, x: np.ndarray) -> np.ndarray:
-        output: np.ndarray = None
+        output = x
 
-        prev_output = x
         for layer in self.__layers:
-            output = layer(prev_output)
-            prev_output = output
+            output = layer(output)
 
         return output
 
     def training_forward_pass(self, x: np.ndarray) -> tuple[dict[str, np.ndarray], ...]:
-        output = []
+        training_output = []
 
-        prev_output = x
+        prev_layer_output = x
         for layer in self.__layers:
-            curr_output = layer.training_forward_pass(prev_output)
-            output.append(curr_output)
-            prev_output = curr_output['z']
+            layer_training_output = layer.training_forward_pass(prev_layer_output)
+            training_output.append(layer_training_output)
+            prev_layer_output = layer_training_output['z']
 
-        return tuple(output)
+        return tuple(training_output)
         
