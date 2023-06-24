@@ -6,13 +6,17 @@ import numpy as np
 
 class UpdateRule(object, metaclass=ABCMeta):
 
-    def __init__(self, parameters: np.ndarray, learning_rate: float = 0.01):
-        self.__parameters = parameters
-        self.__learning_rate = learning_rate
+    def __init__(self, learning_rate: float = 0.01):
+        self._learning_rate = learning_rate
 
     @abstractmethod
     def __call__(self) -> np.ndarray:
         pass
+
+class SGD(UpdateRule):
+    
+        def __call__(self, parameters: np.ndarray, gradient: np.ndarray) -> np.ndarray:
+            return parameters - self._learning_rate * gradient
 
 
 class Optimizer:
@@ -24,13 +28,13 @@ class Optimizer:
         self.__gradient = np.zeros(net.parameters.shape, dtype=object)
 
     def reset_grad(self):
-        self.__gradient = np.zeros(net.parameters.shape, dtype=object)
+        self.__gradient = np.zeros(self.__net.parameters.shape, dtype=object)
 
-    def optimize(self, x: np.ndarray, t: np.ndarray) -> np.ndarray:
-        pass
-
-    def update(self):
-        pass
+    def optimize(self):
+        self.__net.parameters = self.__update_rule(self.__net.parameters, self.__gradient)
+        
+    def update_grad(self, gradient: np.ndarray):
+        self.__gradient += gradient
 
 
 def backprop(net: DenseNetwork, loss_function: LossFunction, x: np.ndarray, t: np.ndarray) -> np.ndarray:
