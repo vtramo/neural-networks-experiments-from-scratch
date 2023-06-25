@@ -23,8 +23,15 @@ if __name__ == '__main__':
     train_images = train_images[:10000]
     train_labels_hot = nnkit.one_hot(train_labels)[:10000]
 
+    validation_split = 0.2
+    num_train_samples = len(train_images)
+    num_val_samples = int(num_train_samples * validation_split)
+
+    val_images = train_images[-num_val_samples:]
+    val_labels_hot = train_labels_hot[-num_val_samples:]
+
     loss = CrossEntropySoftmax()
     update_rule = SGD(learning_rate=0.1)
     trainer = NeuralNetworkSupervisedTrainer(net=net, update_rule=update_rule, loss=loss)
     dataset_generator = DataLabelBatchGenerator(train_images, train_labels_hot, batch_size=128)
-    trainer.train_network(data_label_batch_generator=dataset_generator, epochs=5)
+    trainer.train_network(data_label_batch_generator=dataset_generator, validation_points=val_images, validation_labels=val_labels_hot, epochs=5)
