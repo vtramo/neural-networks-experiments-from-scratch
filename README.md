@@ -29,7 +29,7 @@ train_labels_hot = nnkit.one_hot(train_labels)[:10000]
 
 loss = CrossEntropySoftmax()
 update_rule = SGD(learning_rate=0.1)
-trainer = NeuralNetworkSupervisedTrainer(net=net, update_rule=update_rule, loss=loss)
-dataset_generator = DataLabelBatchGenerator(train_images, train_labels_hot, batch_size=128)
-trainer.train_network(data_label_batch_generator=dataset_generator, epochs=5)
+trainer = NeuralNetworkSupervisedTrainer(net, update_rule, loss)
+training_set_generator = DataLabelBatchGenerator(train_images, train_labels_hot, batch_size=128)
+trainer.train_network(training_set_generator, epochs=5)
 ```
