@@ -1,6 +1,10 @@
 from .neuronet import DenseNetwork
 from .lossfun import LossFunction
 from abc import ABCMeta, abstractmethod
+from os import cpu_count
+from multiprocessing import Pool
+
+import nnkit
 import numpy as np
 import math
 
@@ -58,15 +62,27 @@ class NeuralNetworkSupervisedTrainer:
     def __init__(self, net: DenseNetwork, update_rule: UpdateRule, loss: LossFunction):
         self.__net = net
         self.__update_rule = update_rule
-        self.__loss_function = loss_function
-        self.__gradient = np.zeros(net.parameters.shape, dtype=object)
+        self.__loss = loss
+        self.__gradients = np.zeros(net.parameters.shape, dtype=object)
 
-    def reset_grad(self):
-        self.__gradient = np.zeros(self.__net.parameters.shape, dtype=object)
+    def train_network(self, data_label_batch_generator: DataLabelBatchGenerator, epochs=5):
+        processors = cpu_count()
+        for epoch in range(epochs):
+            self.__reset_gradients()
 
-    def optimize(self):
-        self.__net.parameters = self.__update_rule(self.__net.parameters, self.__gradient)
-        
-    def update_grad(self, gradient: np.ndarray):
-        self.__gradient += gradient
+            for points, labels in data_label_batch_generator:
+                points_chunks = nnkit.fair_divide(points, processors)
+                labels_chunks = nnkit.fair_divide(labels, processors)
 
+                with Pool(processors) as pool:
+                    backprop_args = [(self.__loss, points_chunks[i], labels_chunks[i]) for i in range(0, processors)]
+                    for gradients in pool.starmap(self.__net.compute_gradients, backprop_args):
+                        self.__gradients += gradients
+
+                self.__update_parameters()
+
+    def __reset_gradients(self):
+        self.__gradients = np.zeros(self.__net.parameters.shape, dtype=object)
+
+    def __update_parameters(self):
+        self.__net.parameters = self.__update_rule(self.__net.parameters, self.__gradients)

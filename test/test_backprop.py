@@ -29,7 +29,7 @@ class TestBackprop(unittest.TestCase):
         return parameters
 
     def test_backprop(self):
-        expected_gradient = [
+        expected_gradients = [
             np.array([[6.93797277e-08, 0, 2.31265764e-08, 6.85634960e-08, 6.77472643e-08],
                       [1.07436964e-07, 0, 3.58123222e-08, 1.06173001e-07, 1.04909037e-07]]),
             np.array([[-1.20730367e-04, -2.28574889e-07, -3.39077543e-08],
@@ -39,7 +39,7 @@ class TestBackprop(unittest.TestCase):
                       [-5.00108726e-01, -5.31624154e-05, 0, 0]])
         ]
 
-        gradient = self.net.backprop(self.loss, self.x, self.t)
+        gradients = self.net.backprop(self.loss, self.x, self.t)
 
-        for gradient_layer, expected_gradient_layer in zip(gradient, expected_gradient):
-            np.testing.assert_almost_equal(gradient_layer, expected_gradient_layer)
+        for gradients_layer, expected_gradients_layer in zip(gradients, expected_gradients):
+            np.testing.assert_almost_equal(gradients_layer, expected_gradients_layer)
