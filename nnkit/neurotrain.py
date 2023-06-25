@@ -26,6 +26,38 @@ class SGD(UpdateRule):
 
     def __call__(self, parameters: np.ndarray, gradients: np.ndarray) -> np.ndarray:
         return parameters - self._learning_rate * gradients
+    
+
+class Metrics(object, metaclass=ABCMeta):
+
+        @abstractmethod
+        def update(self, predictions: np.ndarray, label: np.ndarray):
+            pass
+
+        @abstractmethod
+        def result(self) -> float:
+            pass
+
+        def name(self) -> str:
+            return self.__class__.__name__
+
+class Accuracy(Metrics):
+        
+    def __init__(self):
+        self.__total_correct = 0
+        self.__total_samples = 0
+
+    def update(self, predictions: np.ndarray, labels: np.ndarray):
+        correct = np.sum(predictions == labels)
+        self.__total_correct += correct
+        self.__total_samples += len(predictions)
+
+    def result(self) -> float:
+        if self.total_samples == 0:
+            return 0.0
+        accuracy = self.total_correct / self.total_samples
+        return accuracy
+
 
 
 class DataLabelBatchGenerator:
@@ -59,14 +91,18 @@ class DataLabelBatchGenerator:
 
 class NeuralNetworkSupervisedTrainer:
 
-    def __init__(self, net: DenseNetwork, update_rule: UpdateRule, loss: LossFunction):
+    def __init__(self, net: DenseNetwork, update_rule: UpdateRule, loss: LossFunction, *metrics: Metrics...):
         self.__net = net
         self.__update_rule = update_rule
         self.__loss = loss
         self.__gradients = np.zeros(net.parameters.shape, dtype=object)
+        self.__metrics = list(metrics)
 
-    def train_network(self, data_label_batch_generator: DataLabelBatchGenerator, epochs=5):
+    def train_network(self, data_label_batch_generator: DataLabelBatchGenerator, validation_points: np.ndarray, validation_labels: np.ndarray, epochs=5):
         processors = cpu_count()
+        best_parameters = (0.0, self.__net.parameters)
+        extra_metrics = [0.0 for _ in range(len(self.__metrics))]
+
         for epoch in range(epochs):
             self.__reset_gradients()
 
@@ -80,6 +116,42 @@ class NeuralNetworkSupervisedTrainer:
                         self.__gradients += gradients
 
                 self.__update_parameters()
+
+            metric = self.__validate_network(validation_points, validation_labels)
+            if metric[0] > best_parameters[0]:
+                best_parameters = (metric[0], self.__net.parameters)
+                extra_metrics = metric[1:]
+        
+        self.__net.parameters = best_parameters[1]
+
+        return extra_metrics
+        
+
+    def __validate_network(self, validation_points: np.ndarray, validation_labels: np.ndarray):
+        processors = cpu_count()
+        points_chunks = nnkit.fair_divide(validation_points, processors)
+        labels_chunks = nnkit.fair_divide(validation_labels, processors)
+
+        with Pool(processors) as pool:
+            validate_iteration_args = [(points_chunks[i], labels_chunks[i]) for i in range(0, processors)]
+            metrics += pool.starmap(self.__validate_iteration, validate_iteration_args)
+               
+        return metrics / processors
+    
+
+    def __validate_iteration(self, point_chunk: np.ndarray, label_chunk: np.ndarray):
+        computed_loss = np.array([])
+        for point, label in zip(point_chunk, label_chunk):
+            prediction = self.__net.forward(point)
+            computed_loss = np.append(computed_loss, self.__loss(prediction, label))
+            for metric in self.__metrics:
+                metric.update(prediction, label)
+        
+        computed_metrics = np.array([metric.result() for metric in self.__metrics])
+        computed_loss_mean = np.mean(computed_loss)
+
+        return np.concatenate(computed_loss_mean, computed_metrics)
+
 
     def __reset_gradients(self):
         self.__gradients = np.zeros(self.__net.parameters.shape, dtype=object)
