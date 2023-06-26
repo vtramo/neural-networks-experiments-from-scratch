@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 from .neuronet import DenseNetwork
 from .lossfun import LossFunction
 from abc import ABCMeta, abstractmethod
 from os import cpu_count
 from multiprocessing import Pool
+from typing import Generic, TypeVar
 
 import nnkit
 import numpy as np
@@ -26,41 +29,56 @@ class SGD(UpdateRule):
 
     def __call__(self, parameters: np.ndarray, gradients: np.ndarray) -> np.ndarray:
         return parameters - self._learning_rate * gradients
-    
 
-class Metrics(object, metaclass=ABCMeta):
 
-        @abstractmethod
-        def update(self, predictions: np.ndarray, label: np.ndarray):
-            pass
+R = TypeVar('R')
 
-        @abstractmethod
-        def result(self) -> float:
-            pass
 
-        def name(self) -> str:
-            return self.__class__.__name__
+class Metrics(Generic[R], metaclass=ABCMeta):
 
-class Accuracy(Metrics):
-        
-    def __init__(self):
-        self.__total_correct = 0
-        self.__total_samples = 0
+    @abstractmethod
+    def update(self, predictions: np.ndarray, label: np.ndarray) -> Metrics:
+        pass
 
-    def update(self, predictions: np.ndarray, labels: np.ndarray):
-        correct = np.sum(predictions == labels)
-        self.__total_correct += correct
-        self.__total_samples += len(predictions)
+    @abstractmethod
+    def combine(self, metric: Metrics) -> Metrics:
+        pass
+
+    @abstractmethod
+    def result(self) -> R:
+        pass
+
+
+class Accuracy(Metrics[float]):
+
+    def __init__(self, total_correct: int = 0, total_samples: int = 0):
+        self.total_correct = total_correct
+        self.total_samples = total_samples
+
+    def update(self, predictions: np.ndarray, labels: np.ndarray) -> Accuracy:
+        argmax_predictions = np.argmax(predictions, axis=1)
+        argmax_labels = np.argmax(labels, axis=1)
+        total_correct = self.total_correct + np.sum(argmax_predictions == argmax_labels)
+        total_samples = self.total_samples + len(predictions)
+        return Accuracy(total_correct, total_samples)
+
+    def combine(self, metric: Accuracy) -> Accuracy:
+        total_correct = self.total_correct + metric.total_correct
+        total_samples = self.total_samples + metric.total_samples
+        return Accuracy(total_correct, total_samples)
 
     def result(self) -> float:
         if self.total_samples == 0:
             return 0.0
-        accuracy = self.total_correct / self.total_samples
-        return accuracy
 
+        return self.total_correct / self.total_samples
 
+    def __str__(self):
+        return f"accuracy: {self.result()}"
 
-class DataLabelBatchGenerator:
+    def __repr__(self):
+        return self.__str__()
+
 
     def __init__(self, points, labels, batch_size=128):
         assert len(points) == len(labels)
