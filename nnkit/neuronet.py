@@ -129,8 +129,11 @@ class DenseNetwork:
     def depth(self) -> int:
         return len(self.__layers)
 
-    def __call__(self, x: np.ndarray) -> np.ndarray:
-        return self.__output(x)
+    def __call__(self, inputs: np.ndarray) -> np.ndarray:
+        if inputs.ndim == 2:
+            return np.array([self.__output(x) for x in inputs])
+        else:
+            return self.__output(inputs)
 
     def __output(self, x: np.ndarray) -> np.ndarray:
         output = x
@@ -140,7 +143,7 @@ class DenseNetwork:
 
         return output
 
-    def training_forward_pass(self, x: np.ndarray) -> tuple[dict[str, np.ndarray], ...]:
+    def training_forward_pass(self, x: np.ndarray) -> tuple[dict[str, np.ndarray]]:
         training_output = []
 
         prev_layer_output = x
