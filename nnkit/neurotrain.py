@@ -80,10 +80,24 @@ class Accuracy(Metrics[float]):
         return self.__str__()
 
 
-    def __init__(self, points, labels, batch_size=128):
+class DataLabelSet:
+
+    def __init__(self, points, labels):
         assert len(points) == len(labels)
-        self.points = points
-        self.labels = labels
+        self._points = points
+        self._labels = labels
+
+    def get(self) -> tuple[np.ndarray, np.ndarray]:
+        return self._points, self._labels
+
+    def fair_divide(self, workers: int) -> tuple[list[list], list[list]]:
+        return nnkit.fair_divide(self._points, self._labels, workers=workers)
+
+
+class DataLabelBatchGenerator(DataLabelSet):
+
+    def __init__(self, points, labels, batch_size=128):
+        super().__init__(points, labels)
         self.batch_size = batch_size
         self.num_batches = math.ceil(len(points) / batch_size)
 
@@ -97,8 +111,8 @@ class Accuracy(Metrics[float]):
             self.outer_instance = outer_instance
 
         def __next__(self):
-            points = self.outer_instance.points[self.index: self.index + self.outer_instance.batch_size]
-            labels = self.outer_instance.labels[self.index: self.index + self.outer_instance.batch_size]
+            points = self.outer_instance._points[self.index: self.index + self.outer_instance.batch_size]
+            labels = self.outer_instance._labels[self.index: self.index + self.outer_instance.batch_size]
 
             if len(points) == 0:
                 raise StopIteration
