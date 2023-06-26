@@ -6,6 +6,7 @@ from abc import ABCMeta, abstractmethod
 from os import cpu_count
 from multiprocessing import Pool
 from typing import Generic, TypeVar
+from dataclasses import dataclass
 
 import nnkit
 import copy
@@ -26,11 +27,12 @@ class UpdateRule(object, metaclass=ABCMeta):
 class SGD(UpdateRule):
 
     def __init__(self, learning_rate: float = 0.1, momentum: float = 0.0):
-        super().__init(learning_rate)
+        super().__init__(learning_rate)
 
     def __call__(self, parameters: np.ndarray, gradients: np.ndarray) -> np.ndarray:
         return parameters - self._learning_rate * gradients
-    
+
+
 class RProp(UpdateRule):
 
     def __init__(self, learning_rate: float = 0.01, initial_step_size: float = 0.1, increase_factor: float = 1.2, decrease_factor: float = 0.5, min_step_size: float = 1e-6, max_step_size: float = 1.0):
@@ -50,9 +52,9 @@ class RProp(UpdateRule):
         if self._prev_gradient is not None:
             gradient_change = np.sign(gradient * self._prev_gradient)
 
-            if(gradient_change > 0):
+            if gradient_change > 0:
                 self._step_sizes = np.minimum(self._step_sizes * self._increase_factor, self._max_step_size)
-            elif(gradient_change < 0):
+            elif gradient_change < 0:
                 self._step_sizes = np.maximum(self._step_sizes * self._decrease_factor, self._min_step_size)
             else:
                 self._step_sizes = self._step_sizes
@@ -82,11 +84,10 @@ class Metrics(Generic[R], metaclass=ABCMeta):
         pass
 
 
+@dataclass(frozen=True, slots=True)
 class Accuracy(Metrics[float]):
-
-    def __init__(self, total_correct: int = 0, total_samples: int = 0):
-        self.total_correct = total_correct
-        self.total_samples = total_samples
+    total_correct: int = 0
+    total_samples: int = 0
 
     def update(self, predictions: np.ndarray, labels: np.ndarray) -> Accuracy:
         argmax_predictions = np.argmax(predictions, axis=1)
