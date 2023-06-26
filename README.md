@@ -35,10 +35,16 @@ if __name__ == '__main__':
     validation_images = train_images[-validation_set_size:]
     validation_labels = train_labels_hot[-validation_set_size:]
 
-    loss = CrossEntropySoftmax()
-    update_rule = SGD(learning_rate=0.1)
-    trainer = NetworkTrainer(net=net, update_rule=update_rule, loss=loss, metrics=[Accuracy()])
     training_set = DataLabelBatchGenerator(train_images, train_labels_hot, batch_size=128)
     validation_set = DataLabelSet(validation_images, validation_labels)
+    
+    trainer = NetworkTrainer(
+        net=net, 
+        update_rule=SGD(learning_rate=0.1), 
+        loss=CrossEntropySoftmax(),
+        metrics=[Accuracy()]
+    )
+    
     trainer.train_network(training_set, validation_set, epochs=5)
+
 ```
