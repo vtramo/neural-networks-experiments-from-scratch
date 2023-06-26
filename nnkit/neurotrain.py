@@ -164,11 +164,14 @@ class NetworkTrainer:
         self.__gradients = np.zeros(net.parameters.shape, dtype=object)
         self.__metrics = metrics
 
+    @dataclass(slots=True)
     class ParametersWithMetrics:
-        def __init__(self, parameters: np.ndarray):
-            self.parameters = copy.deepcopy(parameters)
-            self.loss = float('inf')
-            self.extra_metrics = []
+        parameters: np.ndarray
+        loss: float = float('inf')
+        extra_metrics: list[Metrics] = None
+
+        def __post_init__(self) -> None:
+            self.parameters = copy.deepcopy(self.parameters)
 
         def set(self, parameters: np.ndarray, loss: float, extra_metrics: list[Metrics]):
             self.parameters = copy.deepcopy(parameters)
