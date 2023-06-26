@@ -25,11 +25,43 @@ class UpdateRule(object, metaclass=ABCMeta):
 
 class SGD(UpdateRule):
 
-    def __init(self, learning_rate: float = 0.1, momentum: float = 0.0):
+    def __init__(self, learning_rate: float = 0.1, momentum: float = 0.0):
         super().__init(learning_rate)
 
     def __call__(self, parameters: np.ndarray, gradients: np.ndarray) -> np.ndarray:
         return parameters - self._learning_rate * gradients
+    
+class RProp(UpdateRule):
+
+    def __init__(self, learning_rate: float = 0.01, initial_step_size: float = 0.1, increase_factor: float = 1.2, decrease_factor: float = 0.5, min_step_size: float = 1e-6, max_step_size: float = 1.0):
+        super().__init__(learning_rate)
+        self._initial_step_size = initial_step_size
+        self._increase_factor = increase_factor
+        self._decrease_factor = decrease_factor
+        self._min_step_size = min_step_size
+        self._max_step_size = max_step_size
+        self._step_sizes = None
+        self._prev_gradient = None
+
+    def __call__(self, parameters: np.ndarray, gradient: np.ndarray) -> np.ndarray:
+        if self._step_sizes is None:
+            self._step_sizes = np.full_like(parameters, self._initial_step_size)
+
+        if self._prev_gradient is not None:
+            gradient_change = np.sign(gradient * self._prev_gradient)
+
+            if(gradient_change > 0):
+                self._step_sizes = np.minimum(self._step_sizes * self._increase_factor, self._max_step_size)
+            elif(gradient_change < 0):
+                self._step_sizes = np.maximum(self._step_sizes * self._decrease_factor, self._min_step_size)
+            else:
+                self._step_sizes = self._step_sizes
+
+        self._prev_gradient = gradient
+
+        gradient_sign = np.where(gradient > 0, 1.0, -1.0)
+
+        return parameters - self._learning_rate * gradient_sign * self._step_sizes
 
 
 R = TypeVar('R')
