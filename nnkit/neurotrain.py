@@ -180,3 +180,30 @@ class NetworkTrainer:
 
     def __update_parameters(self):
         self.__net.parameters = self.__update_rule(self.__net.parameters, self.__gradients)
+
+    def __validate_network(self, validation_set: DataLabelSet) -> float:
+        processors = cpu_count()
+        (points_chunks, labels_chunks) = validation_set.fair_divide(processors)
+
+        per_chunks_losses = [0.0] * processors
+        with Pool(processors) as pool:
+            validate_iteration_args = [(points_chunks[i], labels_chunks[i]) for i in range(0, processors)]
+            results_validate_iterations = pool.starmap(self._validate_iteration, validate_iteration_args)
+            for i, (chunk_loss, chunk_metrics) in enumerate(results_validate_iterations):
+                per_chunks_losses[i] = chunk_loss
+                self.__combine_metrics(chunk_metrics)
+
+        return np.mean(per_chunks_losses)
+
+    def _validate_iteration(self, points: np.ndarray, labels: np.ndarray) -> tuple[float, list[Metrics]]:
+        predictions = self.__net(points)
+        loss = self.__loss(predictions, labels)
+        updated_metrics = [metric.update(predictions, labels) for metric in self.__metrics]
+        return loss, updated_metrics
+
+    def __combine_metrics(self, metrics: Metrics):
+        self.__metrics = [metric.combine(metrics[i]) for i, metric in enumerate(self.__metrics)]
+
+    def __print_epoch_info(self, epoch, loss):
+        metrics_info = [f"loss: {loss}"] + [str(metric) for metric in self.__metrics]
+        print(f"Epoch {epoch}: {metrics_info}")
