@@ -71,7 +71,8 @@ class NetworkTrainer:
     def __compute_gradients(self, points: np.ndarray, labels: np.ndarray) -> None:
         processors = cpu_count()
 
-        if len(points) >= processors * (processors / 2):
+        parallelism_allowed = processors > 1 and len(points) >= processors * (processors / 2)
+        if parallelism_allowed:
             self.__compute_gradients_in_parallel(points, labels)
         else:
             self.__gradients += self.__net.compute_gradients(self.__loss, points, labels)
@@ -91,7 +92,8 @@ class NetworkTrainer:
     def __validate_network(self, validation_set: DataLabelSet) -> float:
         processors = cpu_count()
 
-        if len(validation_set) >= processors * (processors / 2):
+        parallelism_allowed = processors > 1 and len(validation_set) >= processors * (processors / 2)
+        if parallelism_allowed:
             return self.__validate_network_in_parallel(validation_set)
         else:
             (points, labels) = validation_set.get()
