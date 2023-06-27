@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from .neuronet import DenseNetwork
-from .lossfun import LossFunction
+from nnkit.neuronet import DenseNetwork
+from nnkit.lossfun import LossFunction
 from abc import ABCMeta, abstractmethod
 from os import cpu_count
 from multiprocessing import Pool
-from typing import Generic, TypeVar
 from dataclasses import dataclass
+from collections.abc import Callable
 
+import os
 import nnkit
 import copy
 import numpy as np
@@ -185,20 +186,13 @@ class NetworkTrainer:
         epochs=5
     ) -> ParametersWithMetrics:
 
-        processors = cpu_count()
         best_parameters = self.ParametersWithMetrics(self.__net.parameters)
 
         for epoch in range(epochs):
             self.__reset_gradients()
 
             for points, labels in training_set_batch_generator:
-                (points_chunks, labels_chunks) = nnkit.fair_divide(points, labels, workers=processors)
-
-                with Pool(processors) as pool:
-                    backprop_args = [(self.__loss, points_chunks[i], labels_chunks[i]) for i in range(0, processors)]
-                    for gradients in pool.starmap(self.__net.compute_gradients, backprop_args):
-                        self.__gradients += gradients
-
+                self.__compute_gradients(points, labels)
                 self.__update_parameters()
 
             loss = self.__validate_network(validation_set)
@@ -211,13 +205,42 @@ class NetworkTrainer:
 
         return best_parameters
 
-    def __reset_gradients(self):
+    def __reset_gradients(self) -> None:
         self.__gradients = np.zeros(self.__net.parameters.shape, dtype=object)
 
-    def __update_parameters(self):
+    def __compute_gradients(self, points: np.ndarray, labels: np.ndarray) -> None:
+        processors = cpu_count()
+
+        if len(validation_set) >= processors * (processors / 2):
+            self.__compute_gradients_in_parallel(points, labels)
+        else:
+            self.__gradients += self.__net.compute_gradients(self.__loss, points, labels)
+
+    def __compute_gradients_in_parallel(self, points: np.ndarray, labels: np.ndarray) -> None:
+        processors = cpu_count()
+        (points_chunks, labels_chunks) = nnkit.datasets.fair_divide(points, labels, workers=processors)
+
+        with Pool(processors) as pool:
+            backprop_args = [(self.__loss, points_chunks[i], labels_chunks[i]) for i in range(0, processors)]
+            for gradients in pool.starmap(self.__net.compute_gradients, backprop_args):
+                self.__gradients += gradients
+
+    def __update_parameters(self) -> None:
         self.__net.parameters = self.__update_rule(self.__net.parameters, self.__gradients)
 
     def __validate_network(self, validation_set: DataLabelSet) -> float:
+        processors = cpu_count()
+
+        if len(validation_set) >= processors * (processors / 2):
+            return self.__validate_network_in_parallel(validation_set)
+        else:
+            (points, labels) = validation_set.get()
+            predictions = self.__net(points)
+            loss = self.__loss(predictions, labels)
+            self.__metrics = [metric.update(predictions, labels) for metric in self.__metrics]
+            return np.mean(loss)
+
+    def __validate_network_in_parallel(self, validation_set: DataLabelSet) -> float:
         processors = cpu_count()
         (points_chunks, labels_chunks) = validation_set.fair_divide(processors)
 
@@ -235,11 +258,11 @@ class NetworkTrainer:
         predictions = self.__net(points)
         loss = self.__loss(predictions, labels)
         updated_metrics = [metric.update(predictions, labels) for metric in self.__metrics]
-        return loss, updated_metrics
+        return np.mean(loss), updated_metrics
 
-    def __combine_metrics(self, metrics: Metrics):
+    def __combine_metrics(self, metrics: Metrics) -> None:
         self.__metrics = [metric.combine(metrics[i]) for i, metric in enumerate(self.__metrics)]
 
-    def __print_epoch_info(self, epoch, loss):
+    def __print_epoch_info(self, epoch, loss) -> None:
         metrics_info = [f"loss: {loss}"] + [str(metric) for metric in self.__metrics]
         print(f"Epoch {epoch}: {metrics_info}")
