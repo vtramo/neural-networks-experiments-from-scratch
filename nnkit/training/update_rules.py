@@ -28,14 +28,13 @@ class RProp(UpdateRule):
 
     def __init__(
         self,
-        learning_rate: float = 0.01,
         initial_step_size: float = 0.1,
         increase_factor: float = 1.2,
         decrease_factor: float = 0.5,
         min_step_size: float = 1e-6,
         max_step_size: float = 1.0
     ):
-        super().__init__(learning_rate)
+        super().__init__(0.0)
         self._initial_stepsize = initial_step_size
         self._increase_factor = increase_factor
         self._decrease_factor = decrease_factor
@@ -54,17 +53,17 @@ class RProp(UpdateRule):
             self.stepsize = min(self.stepsize * increase_factor, max_stepsize)
             return self.stepsize
 
-        def max_min_stepsize(self, increase_factor, min_stepsize) -> float:
-            self.stepsize = max(self.stepsize * increase_factor, min_stepsize)
+        def max_min_stepsize(self, decrease_factor, min_stepsize) -> float:
+            self.stepsize = max(self.stepsize * decrease_factor, min_stepsize)
             return self.stepsize
 
         @staticmethod
-        def max_min_stepsize_ndarray(weights: np.ndarray, increase_factor, max_stepsize) -> np.ndarray:
-            return np.array([w.max_min_stepsize(increase_factor, max_stepsize) for w in weights])
+        def max_min_stepsize_ndarray(weights: np.ndarray, increase_factor, min_stepsize) -> np.ndarray:
+            return np.array([w.max_min_stepsize(increase_factor, min_stepsize) for w in weights])
 
         @staticmethod
-        def min_max_stepsize_ndarray(weights: np.ndarray, increase_factor, min_stepsize) -> np.ndarray:
-            return np.array([w.min_max_stepsize(increase_factor, min_stepsize) for w in weights])
+        def min_max_stepsize_ndarray(weights: np.ndarray, increase_factor, max_stepsize) -> np.ndarray:
+            return np.array([w.min_max_stepsize(increase_factor, max_stepsize) for w in weights])
 
     def __call__(self, parameters: np.ndarray, gradients: np.ndarray) -> np.ndarray:
 
@@ -84,8 +83,8 @@ class RProp(UpdateRule):
 
         self._prev_gradients = gradients
 
-        gradient_sign = np.array([-np.sign(layer_gradients) for layer_gradients in gradients], dtype=object)
-        return parameters - self._learning_rate * gradient_sign * self._stepsizes
+        gradients_sign = np.array([np.sign(layer_gradients) for layer_gradients in gradients], dtype=object)
+        return parameters - (gradients_sign * self._stepsizes)
 
     def __init_stepsizes(self, parameters: np.ndarray) -> None:
         self._stepsizes = np.array([

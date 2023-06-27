@@ -42,7 +42,7 @@ if __name__ == '__main__':
 
     trainer = NetworkTrainer(
         net=net,
-        update_rule=RProp(learning_rate=0.01),
+        update_rule=RProp(),
         loss=CrossEntropySoftmax(),
         metrics=[Accuracy()]
     )
