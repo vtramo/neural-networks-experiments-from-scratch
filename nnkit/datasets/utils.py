@@ -41,7 +41,7 @@ class DataLabelSet:
         return self._points, self._labels
 
     def fair_divide(self, workers: int) -> tuple[list[list], list[list]]:
-        return nnkit.datasets.fair_divide(self._points, self._labels, workers=workers)
+        return fair_divide(self._points, self._labels, workers=workers)
 
     def __len__(self):
         return len(self._points)

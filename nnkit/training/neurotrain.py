@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from nnkit.neuronet import DenseNetwork
 from nnkit.lossfun import LossFunction
+from nnkit.datasets.utils import fair_divide
 from abc import ABCMeta, abstractmethod
 from os import cpu_count
 from multiprocessing import Pool
@@ -70,14 +71,14 @@ class NetworkTrainer:
     def __compute_gradients(self, points: np.ndarray, labels: np.ndarray) -> None:
         processors = cpu_count()
 
-        if len(validation_set) >= processors * (processors / 2):
+        if len(points) >= processors * (processors / 2):
             self.__compute_gradients_in_parallel(points, labels)
         else:
             self.__gradients += self.__net.compute_gradients(self.__loss, points, labels)
 
     def __compute_gradients_in_parallel(self, points: np.ndarray, labels: np.ndarray) -> None:
         processors = cpu_count()
-        (points_chunks, labels_chunks) = nnkit.datasets.fair_divide(points, labels, workers=processors)
+        (points_chunks, labels_chunks) = fair_divide(points, labels, workers=processors)
 
         with Pool(processors) as pool:
             backprop_args = [(self.__loss, points_chunks[i], labels_chunks[i]) for i in range(0, processors)]
