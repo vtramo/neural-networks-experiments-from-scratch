@@ -1,9 +1,11 @@
-import nnkit
 from nnkit.neuronet import DenseLayer, DenseNetwork
-from nnkit.actfun import Sigmoid, Softmax, ReLU
+from nnkit.actfun import Softmax, ReLU
 from nnkit.lossfun import CrossEntropySoftmax
 from nnkit.datasets import mnist
-from nnkit.neurotrain import DataLabelSet, DataLabelBatchGenerator, NetworkTrainer, SGD, Accuracy, RProp
+from nnkit.datasets.utils import DataLabelSet, DataLabelBatchGenerator, one_hot
+from nnkit.training.neurotrain import NetworkTrainer
+from nnkit.training.update_rules import RProp
+from nnkit.training.metrics import Accuracy
 
 
 if __name__ == '__main__':
@@ -20,17 +22,22 @@ if __name__ == '__main__':
     test_images = test_images.reshape((10000, 28 * 28))
     test_images = test_images.astype("float32") / 255
 
-    train_images = train_images[:10000]
-    train_labels_hot = nnkit.one_hot(train_labels)[:10000]
+    train_images = train_images[:5000]
+    train_labels_hot = one_hot(train_labels)[:5000]
 
     validation_split = 0.2
     validation_set_size = int(len(train_images) * validation_split)
     validation_images = train_images[-validation_set_size:]
     validation_labels = train_labels_hot[-validation_set_size:]
 
-    loss = CrossEntropySoftmax()
-    update_rule = RProp(learning_rate=0.01)
-    trainer = NetworkTrainer(net=net, update_rule=update_rule, loss=loss, metrics=[Accuracy()])
     training_set = DataLabelBatchGenerator(train_images, train_labels_hot, batch_size=128)
     validation_set = DataLabelSet(validation_images, validation_labels)
+
+    trainer = NetworkTrainer(
+        net=net,
+        update_rule=RProp(learning_rate=0.01),
+        loss=CrossEntropySoftmax(),
+        metrics=[Accuracy()]
+    )
+
     trainer.train_network(training_set, validation_set, epochs=5)
