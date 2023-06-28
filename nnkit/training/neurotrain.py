@@ -49,7 +49,6 @@ class NetworkTrainer:
         best_parameters = self.ParametersWithMetrics(self.__net.parameters)
 
         for epoch in range(epochs):
-            self.__reset_gradients()
 
             for points, labels in training_set_batch_generator:
                 self.__compute_gradients(points, labels)
@@ -60,6 +59,8 @@ class NetworkTrainer:
                 best_parameters.set(self.__net.parameters, loss, self.__metrics)
 
             self.__print_epoch_info(epoch, loss)
+            self.__reset_gradients()
+            self.__reset_metrics()
 
         self.__net.parameters = best_parameters.parameters
 
@@ -67,6 +68,9 @@ class NetworkTrainer:
 
     def __reset_gradients(self) -> None:
         self.__gradients = np.zeros(self.__net.parameters.shape, dtype=object)
+
+    def __reset_metrics(self) -> None:
+        self.__metrics = [metric.reset() for metric in self.__metrics]
 
     def __compute_gradients(self, points: np.ndarray, labels: np.ndarray) -> None:
         processors = cpu_count()
@@ -122,8 +126,11 @@ class NetworkTrainer:
         updated_metrics = [metric.update(predictions, labels) for metric in self.__metrics]
         return np.mean(loss), updated_metrics
 
-    def __combine_metrics(self, metrics: Metrics) -> None:
-        self.__metrics = [metric.combine(metrics[i]) for i, metric in enumerate(self.__metrics)]
+    def __combine_metrics(self, metrics: list[Metrics]) -> None:
+        self.__metrics = [
+            metric1.combine(metric2)
+            for metric1, metric2 in zip(self.__metrics, metrics)
+        ]
 
     def __print_epoch_info(self, epoch, loss) -> None:
         metrics_info = [f"loss: {loss}"] + [str(metric) for metric in self.__metrics]
