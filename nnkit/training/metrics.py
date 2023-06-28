@@ -23,6 +23,10 @@ class Metrics(Generic[R], metaclass=ABCMeta):
     def result(self) -> R:
         pass
 
+    @abstractmethod
+    def reset(self) -> R:
+        pass
+
 
 @dataclass(frozen=True, slots=True)
 class Accuracy(Metrics[float]):
@@ -46,6 +50,9 @@ class Accuracy(Metrics[float]):
             return 0.0
 
         return self.total_correct / self.total_samples
+
+    def reset(self) -> Accuracy:
+        return Accuracy()
 
     def __str__(self):
         return f"accuracy: {self.result()}"
