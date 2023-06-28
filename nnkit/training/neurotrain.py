@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from nnkit.neuronet import DenseNetwork
 from nnkit.lossfun import LossFunction
-from nnkit.datasets.utils import DataLabelBatchGenerator, DataLabelSet, fair_divide
-from nnkit.training.metrics import Metrics
 from nnkit.training.update_rules import UpdateRule
+from nnkit.training.metrics import Metrics
+from nnkit.datasets.utils import fair_divide, DataLabelSet, DataLabelBatchGenerator
 from abc import ABCMeta, abstractmethod
 from os import cpu_count
 from multiprocessing import Pool
@@ -18,6 +18,12 @@ import numpy as np
 import math
 
 
+@dataclass(slots=True, frozen=True)
+class TrainData:
+    gradients: np.ndarray
+    parameters: np.ndarray
+    loss: float
+
 
 class NetworkTrainer:
 
@@ -27,6 +33,7 @@ class NetworkTrainer:
         self.__loss = loss
         self.__gradients = np.zeros(net.parameters.shape, dtype=object)
         self.__metrics = metrics
+        self.__last_loss_value = 0.0
 
     @dataclass(slots=True)
     class ParametersWithMetrics:
@@ -56,13 +63,13 @@ class NetworkTrainer:
             for points, labels in training_set_batch_generator:
                 self.__compute_gradients(points, labels)
                 self.__update_parameters()
+                self.__reset_gradients()
 
-            loss = self.__validate_network(validation_set)
-            if loss < best_parameters.loss:
-                best_parameters.set(self.__net.parameters, loss, self.__metrics)
+            self.__last_loss_value = self.__validate_network(validation_set)
+            if self.__last_loss_value < best_parameters.loss:
+                best_parameters.set(self.__net.parameters, self.__last_loss_value, self.__metrics)
 
-            self.__print_epoch_info(epoch, loss)
-            self.__reset_gradients()
+            self.__print_epoch_info(epoch, self.__last_loss_value)
             self.__reset_metrics()
 
         self.__net.parameters = best_parameters.parameters
