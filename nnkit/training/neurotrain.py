@@ -101,7 +101,11 @@ class NetworkTrainer:
                 self.__gradients += gradients
 
     def __update_parameters(self) -> None:
-        self.__net.parameters = self.__update_rule(self.__net.parameters, self.__gradients)
+        gradients = copy.deepcopy(self.__gradients)
+        parameters = copy.deepcopy(self.__net.parameters)
+        train_data = TrainData(gradients, parameters, self.__last_loss_value)
+
+        self.__net.parameters = self.__update_rule(train_data)
 
     def __validate_network(self, validation_set: DataLabelSet) -> float:
         processors = cpu_count()

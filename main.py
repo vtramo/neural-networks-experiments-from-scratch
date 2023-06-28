@@ -4,7 +4,7 @@ from nnkit.lossfun import CrossEntropySoftmax
 from nnkit.datasets import mnist
 from nnkit.datasets.utils import DataLabelSet, DataLabelBatchGenerator, one_hot
 from nnkit.training.neurotrain import NetworkTrainer
-from nnkit.training.update_rules import RProp
+from nnkit.training.update_rules import RProp, RPropPlus, IRPropPlus
 from nnkit.training.metrics import Accuracy
 
 
@@ -22,22 +22,22 @@ if __name__ == '__main__':
     test_images = test_images.reshape((10000, 28 * 28))
     test_images = test_images.astype("float32") / 255
 
-    train_images = train_images[:5000]
-    train_labels_hot = one_hot(train_labels)[:5000]
+    train_images = train_images[:100]
+    train_labels_hot = one_hot(train_labels)[:100]
 
     validation_split = 0.2
     validation_set_size = int(len(train_images) * validation_split)
     validation_images = train_images[-validation_set_size:]
     validation_labels = train_labels_hot[-validation_set_size:]
 
-    training_set = DataLabelBatchGenerator(train_images, train_labels_hot, batch_size=128)
+    training_set = DataLabelBatchGenerator(train_images, train_labels_hot, batch_size=len(train_images))
     validation_set = DataLabelSet(validation_images, validation_labels)
 
     trainer = NetworkTrainer(
         net=net,
-        update_rule=RProp(),
+        update_rule=IRPropPlus(),
         loss=CrossEntropySoftmax(),
         metrics=[Accuracy()]
     )
 
-    trainer.train_network(training_set, validation_set, epochs=5)
+    trainer.train_network(training_set, validation_set, epochs=50)
