@@ -11,7 +11,7 @@ from nnkit.lossfun import CrossEntropySoftmax
 from nnkit.datasets import mnist
 from nnkit.datasets.utils import DataLabelSet, DataLabelBatchGenerator, one_hot
 from nnkit.training.neurotrain import NetworkTrainer
-from nnkit.training.update_rules import RProp, RPropPlus, IRPropPlus
+from nnkit.training.update_rules import SGD, RPropPlus, IRPropPlus, RPropMinus, IRPropMinus
 from nnkit.training.metrics import Accuracy
 
 
@@ -29,8 +29,8 @@ if __name__ == '__main__':
     test_images = test_images.reshape((10000, 28 * 28))
     test_images = test_images.astype("float32") / 255
 
-    train_images = train_images[:10000]
-    train_labels_hot = one_hot(train_labels)[:10000]
+    train_images = train_images[:100]
+    train_labels_hot = one_hot(train_labels)[:100]
 
     validation_split = 0.2
     validation_set_size = int(len(train_images) * validation_split)
@@ -48,5 +48,4 @@ if __name__ == '__main__':
     )
 
     trainer.train_network(training_set, validation_set, epochs=50)
-
 ```
