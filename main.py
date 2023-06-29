@@ -4,7 +4,7 @@ from nnkit.lossfun import CrossEntropySoftmax
 from nnkit.datasets import mnist
 from nnkit.datasets.utils import DataLabelSet, DataLabelBatchGenerator, one_hot
 from nnkit.training.neurotrain import NetworkTrainer
-from nnkit.training.update_rules import RProp, RPropPlus, IRPropPlus
+from nnkit.training.update_rules import SGD, RPropPlus, IRPropPlus, RPropMinus, IRPropMinus
 from nnkit.training.metrics import Accuracy
 
 

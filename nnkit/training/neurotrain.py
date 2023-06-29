@@ -5,17 +5,13 @@ from nnkit.lossfun import LossFunction
 from nnkit.training.update_rules import UpdateRule
 from nnkit.training.metrics import Metrics
 from nnkit.datasets.utils import fair_divide, DataLabelSet, DataLabelBatchGenerator
-from abc import ABCMeta, abstractmethod
+
 from os import cpu_count
 from multiprocessing import Pool
 from dataclasses import dataclass
-from collections.abc import Callable
 
-import os
-import nnkit
 import copy
 import numpy as np
-import math
 
 
 @dataclass(slots=True, frozen=True)
