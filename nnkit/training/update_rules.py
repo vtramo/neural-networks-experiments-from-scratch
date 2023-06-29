@@ -167,7 +167,7 @@ class RPropPlus(RProp):
     def compute_delta_parameter(self, indexes: tuple[int, int, int], gradients_sign: np.ndarray) -> float:
         (i, j, k) = indexes
 
-        if np.sign(gradients_sign[i][j][k]) * np.sign(self._prev_delta_parameters[i][j][k]) < 0:
+        if self.gradients_change is not None and self.gradients_change[i][j][k] < 0:
             delta_parameter = -self._prev_delta_parameters[i][j][k]
             self.prev_gradients[i][j][k] = 0
         else:
@@ -199,7 +199,7 @@ class IRPropPlus(RPropPlus):
     def compute_delta_parameter(self, indexes: tuple[int, int, int], gradients_sign: np.ndarray) -> float:
         (i, j, k) = indexes
 
-        if np.sign(gradients_sign[i][j][k]) * np.sign(self._prev_delta_parameters[i][j][k]) < 0:
+        if self.gradients_change is not None and self.gradients_change[i][j][k] < 0:
             if self._prev_loss is None or self._loss > self._prev_loss:
                 delta_parameter = -self._prev_delta_parameters[i][j][k]
             else:
@@ -211,8 +211,21 @@ class IRPropPlus(RPropPlus):
         return delta_parameter
 
 
+class IRPropMinus(IRPropPlus):
+    
+    def compute_delta_parameter(self, indexes: tuple[int, int, int], gradients_sign: np.ndarray) -> float:
+        (i, j, k) = indexes
+
+        if self.gradients_change is not None and self.gradients_change[i][j][k] < 0:
+            self.prev_gradients[i][j][k] = 0
+        
+        delta_parameter = -np.sign(gradients_sign[i][j][k]) * self._stepsizes[i][j][k]
+
+        return delta_parameter
+
 def numpy_deep_zeros_like(complex_ndarray: np.ndarray, dtype=object) -> np.ndarray:
     return np.array([
         np.zeros_like(array)
         for array in complex_ndarray
     ], dtype=dtype)
+
