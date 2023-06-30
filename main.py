@@ -22,20 +22,24 @@ if __name__ == '__main__':
     test_images = test_images.reshape((10000, 28 * 28))
     test_images = test_images.astype("float32") / 255
 
-    train_images = train_images[:100]
-    train_labels_hot = one_hot(train_labels)[:100]
-
+    training_data_size = 100
+    training_split = 0.8
     validation_split = 0.2
-    validation_set_size = int(len(train_images) * validation_split)
+
+    training_set_size = int(training_data_size * training_split)
+    train_images = train_images[:training_set_size]
+    train_labels_hot = one_hot(train_labels)[:training_set_size]
+
+    validation_set_size = int(training_data_size * validation_split)
     validation_images = train_images[-validation_set_size:]
     validation_labels = train_labels_hot[-validation_set_size:]
 
-    training_set = DataLabelBatchGenerator(train_images, train_labels_hot, batch_size=len(train_images))
+    training_set = DataLabelBatchGenerator(train_images, train_labels_hot, batch_size=1)
     validation_set = DataLabelSet(validation_images, validation_labels)
 
     trainer = NetworkTrainer(
         net=net,
-        update_rule=IRPropPlus(),
+        update_rule=SGD(learning_rate=0.1, momentum=0.9),
         loss=CrossEntropySoftmax(),
         metrics=[Accuracy()]
     )
