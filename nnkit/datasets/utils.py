@@ -54,9 +54,6 @@ class DataLabelBatchGenerator(DataLabelSet):
         self.batch_size = batch_size
         self.num_batches = math.ceil(len(points) / batch_size)
 
-    def __iter__(self):
-        return self.DataLabelIterator(self)
-
     class DataLabelIterator:
 
         def __init__(self, outer_instance):
@@ -73,3 +70,5 @@ class DataLabelBatchGenerator(DataLabelSet):
             self.index += self.outer_instance.batch_size
             return points, labels
 
+    def __iter__(self) -> DataLabelIterator:
+        return self.DataLabelIterator(self)

@@ -19,11 +19,20 @@ class UpdateRule(object, metaclass=ABCMeta):
 
 class SGD(UpdateRule):
 
-    def __init__(self, learning_rate: float = 0.1):
+    def __init__(self, learning_rate: float, momentum: float = 0.0):
         super().__init__(learning_rate)
+        self._momentum = momentum
+        self._prev_delta_parameters = 0.0
 
     def __call__(self, train_data: TrainData) -> np.ndarray:
-        return train_data.parameters - self._learning_rate * train_data.gradients
+        parameters = train_data.parameters
+        gradients = train_data.gradients
+
+        delta_parameters = - (self._learning_rate * gradients) - (self._momentum * self._prev_delta_parameters)
+        if self._momentum != 0:
+            self._prev_delta_parameters = delta_parameters
+
+        return parameters + delta_parameters
 
 
 class AbstractRProp(UpdateRule, metaclass=ABCMeta):
