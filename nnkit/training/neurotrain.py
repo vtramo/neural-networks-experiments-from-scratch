@@ -3,7 +3,7 @@ from __future__ import annotations
 from nnkit.neuronet import DenseNetwork
 from nnkit.lossfun import LossFunction
 from nnkit.training.update_rules import UpdateRule
-from nnkit.training.metrics import Metrics
+from nnkit.training.metrics import MetricResults, Metrics, MetricsEvaluator
 from nnkit.datasets.utils import fair_divide, DataLabelSet, DataLabelBatchGenerator
 
 from os import cpu_count
@@ -34,16 +34,14 @@ class NetworkTrainer:
     @dataclass(slots=True)
     class ParametersWithMetrics:
         parameters: np.ndarray
-        loss: float = float('inf')
-        extra_metrics: list[Metrics] = None
+        metric_results: MetricResults
 
         def __post_init__(self) -> None:
             self.parameters = copy.deepcopy(self.parameters)
 
-        def set(self, parameters: np.ndarray, loss: float, extra_metrics: list[Metrics]):
+        def set(self, parameters: np.ndarray, metric_result: MetricResults) -> None:
             self.parameters = copy.deepcopy(parameters)
-            self.loss = loss
-            self.extra_metrics = extra_metrics
+            self.metric_results = metric_result
 
     def train_network(
         self,
@@ -51,8 +49,11 @@ class NetworkTrainer:
         validation_set: DataLabelSet,
         epochs=5
     ) -> ParametersWithMetrics:
+        
+        metrics_results = []
 
-        best_parameters = self.ParametersWithMetrics(self.__net.parameters)
+        best_parameters = self.ParametersWithMetrics(self.__net.parameters, metrics_results)
+        metrics_evaluator = MetricsEvaluator(self.__metrics, validation_set, self.__net, self.__loss)    
 
         for epoch in range(epochs):
 
@@ -61,11 +62,13 @@ class NetworkTrainer:
                 self.__update_parameters()
                 self.__reset_gradients()
 
-            self.__last_loss_value = self.__validate_network(validation_set)
-            if self.__last_loss_value < best_parameters.loss:
-                best_parameters.set(self.__net.parameters, self.__last_loss_value, self.__metrics)
+            metric_result = metrics_evaluator.compute_metrics()
+            metrics_results.append(metric_result)
+            self.__last_loss_value = metric_result.get("loss")
+            if self.__last_loss_value < best_parameters.metric_results.get("loss"):
+                best_parameters.set(self.__net.parameters, metric_result)
 
-            self.__print_epoch_info(epoch, self.__last_loss_value)
+            print(metric_result)
             self.__reset_metrics()
 
         self.__net.parameters = best_parameters.parameters
@@ -102,46 +105,3 @@ class NetworkTrainer:
         train_data = TrainData(gradients, parameters, self.__last_loss_value)
 
         self.__net.parameters = self.__update_rule(train_data)
-
-    def __validate_network(self, validation_set: DataLabelSet) -> float:
-        processors = cpu_count()
-
-        parallelism_allowed = processors > 1 and len(validation_set) >= processors * (processors / 2)
-        if parallelism_allowed:
-            return self.__validate_network_in_parallel(validation_set)
-        else:
-            (points, labels) = validation_set.get()
-            predictions = self.__net(points)
-            loss = self.__loss(predictions, labels)
-            self.__metrics = [metric.update(predictions, labels) for metric in self.__metrics]
-            return np.mean(loss)
-
-    def __validate_network_in_parallel(self, validation_set: DataLabelSet) -> float:
-        processors = cpu_count()
-        (points_chunks, labels_chunks) = validation_set.fair_divide(processors)
-
-        per_chunks_losses = [0.0] * processors
-        with Pool(processors) as pool:
-            validate_iteration_args = [(points_chunks[i], labels_chunks[i]) for i in range(0, processors)]
-            results_validate_iterations = pool.starmap(self._validate_iteration, validate_iteration_args)
-            for i, (chunk_loss, chunk_metrics) in enumerate(results_validate_iterations):
-                per_chunks_losses[i] = chunk_loss
-                self.__combine_metrics(chunk_metrics)
-
-        return np.mean(per_chunks_losses)
-
-    def _validate_iteration(self, points: np.ndarray, labels: np.ndarray) -> tuple[float, list[Metrics]]:
-        predictions = self.__net(points)
-        loss = self.__loss(predictions, labels)
-        updated_metrics = [metric.update(predictions, labels) for metric in self.__metrics]
-        return np.mean(loss), updated_metrics
-
-    def __combine_metrics(self, metrics: list[Metrics]) -> None:
-        self.__metrics = [
-            metric1.combine(metric2)
-            for metric1, metric2 in zip(self.__metrics, metrics)
-        ]
-
-    def __print_epoch_info(self, epoch, loss) -> None:
-        metrics_info = [f"loss: {loss}"] + [str(metric) for metric in self.__metrics]
-        print(f"Epoch {epoch}: {metrics_info}")
