@@ -149,14 +149,13 @@ class NetworkTrainer:
     def __reset_gradients(self) -> None:
         self.__gradients = np.zeros(self.__net.parameters.shape, dtype=object)
 
-    __PREFIX_VALIDATION_METRIC = "validation"
-
     def __evaluate_net(self, validation_set: DataLabelSet, *data_sets: DataLabelSet) -> MetricResults:
         validation_metric_results = self.__metrics_evaluator.compute_metrics(validation_set)
         loss_metric = validation_metric_results[self.__loss_function.name]
         self.__last_loss = loss_metric.result()
 
-        validation_metric_results.prefix(self.__PREFIX_VALIDATION_METRIC)
+        validation_metric_prefix = "validation" if not validation_set.name else validation_set.name
+        validation_metric_results.prefix(validation_metric_prefix)
         self.__train_history.store(validation_metric_results, epoch=self.__current_epoch)
 
         for data_set in data_sets:
