@@ -29,30 +29,25 @@ if __name__ == '__main__':
     # Load data / Data pre-processing
     (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
     train_images = train_images.reshape((60000, 28 * 28))
-    train_images = train_images.astype("float32") / 255
+    train_images = (train_images.astype('float32') / 255)
     train_labels = one_hot(train_labels)
     test_images = test_images.reshape((10000, 28 * 28))
-    test_images = test_images.astype("float32") / 255
+    test_images = test_images.astype('float32') / 255
     test_labels = one_hot(test_labels)
 
     # Training data / Validation data
-    val_split = 0.3
-    num_samples_val_set = int(len(train_images) * val_split)
-    train_images = train_images[num_samples_val_set:]
-    train_labels = train_labels[num_samples_val_set:]
-    val_images = train_images[:num_samples_val_set]
-    val_labels = train_labels[:num_samples_val_set]
+    training_set = DataLabelSet(train_images, train_labels, name='training')
+    training_set, validation_set = training_set.split(split_factor=0.3, split_set_name='validation')
+    training_set = DataLabelBatchGenerator.from_data_label_set(training_set, batch_size=len(training_set))
 
     # Train the network
-    training_set = DataLabelBatchGenerator(train_images, train_labels, batch_size=len(train_images), name="training")
-    validation_set = DataLabelSet(val_images, val_labels, name="validation")
-
     trainer = NetworkTrainer(
         net=net,
-        update_rule=RPropPlus(),
+        update_rule=RPropMinus(),
         loss_function=CrossEntropySoftmax(),
-        metrics=[Accuracy()]
+        metrics=[Accuracy()],
+        multiprocessing=False
     )
 
-    history = trainer.train_network(training_set, validation_set, epochs=1000)
+    history = trainer.train_network(training_set, validation_set, epochs=200)
 ```
