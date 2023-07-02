@@ -4,7 +4,7 @@ from nnkit.neuronet import DenseNetwork
 from nnkit.losses import LossFunction
 from nnkit.training.update_rules import UpdateRule
 from nnkit.training.metrics import MetricResults, Metrics, MetricsEvaluator, Loss
-from nnkit.datasets.utils import fair_divide, DataLabelSet, DataLabelBatchGenerator
+from nnkit.datasets.utils import fair_divide, DataLabelSet
 
 from os import cpu_count
 from multiprocessing import Pool
@@ -80,25 +80,25 @@ class NetworkTrainer:
 
     def train_network(
         self,
-        training_set_batch_generator: DataLabelBatchGenerator,
+        training_set: DataLabelSet,
         validation_set: DataLabelSet,
         epochs: int
     ) -> TrainingHistory:
 
         self.__train_history = TrainingHistory(
             epochs,
-            steps=training_set_batch_generator.num_batches,
+            steps=training_set.steps,
             update_rule=self.__update_rule.name
         )
 
         for epoch in range(epochs):
             self.__current_epoch = epoch
-            for points, labels in training_set_batch_generator:
+            for points, labels in training_set:
                 self.__compute_gradients(points, labels)
                 self.__update_parameters()
                 self.__reset_gradients()
 
-            validation_metric_results = self.__evaluate_net(validation_set, training_set_batch_generator)
+            validation_metric_results = self.__evaluate_net(validation_set, training_set)
 
             if self.__last_loss < self.__best_parameters.loss:
                 self.__best_parameters.parameters = self.__net.parameters

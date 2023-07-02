@@ -34,11 +34,13 @@ def fair_divide(*iterables: list, workers: int) -> list[list]:
 
 class DataLabelSet:
 
-    def __init__(self, points: np.ndarray, labels: np.ndarray, name: str = ""):
+    def __init__(self, points: np.ndarray, labels: np.ndarray, batch_size: int = 128, name: str = ""):
         assert len(points) == len(labels)
         self._points = points
         self._labels = labels
         self.name = name
+        self.batch_size = batch_size
+        self.steps = math.ceil(len(points) / batch_size)
 
     def get(self) -> tuple[np.ndarray, np.ndarray]:
         return self._points, self._labels
@@ -48,23 +50,6 @@ class DataLabelSet:
 
     def __len__(self) -> int:
         return len(self._points)
-
-    def __iter__(self) -> zip[np.ndarray, np.ndarray]:
-        return zip(self._points, self._labels)
-    
-    def split(self, split_factor: float, split_set_name: str = "") -> tuple[DataLabelSet, DataLabelSet]:
-        split_index = int(len(self) * split_factor)
-        left_dataset = DataLabelSet(self._points[split_index:], self._labels[split_index:], name=self.name)
-        right_dataset = DataLabelSet(self._points[:split_index], self._labels[:split_index], name=split_set_name)
-        return left_dataset, right_dataset
-
-
-class DataLabelBatchGenerator(DataLabelSet):
-
-    def __init__(self, points: np.ndarray, labels: np.ndarray, batch_size=128, name: str = ""):
-        super().__init__(points, labels, name)
-        self.batch_size = batch_size
-        self.num_batches = math.ceil(len(points) / batch_size)
 
     class DataLabelIterator:
 
@@ -82,41 +67,30 @@ class DataLabelBatchGenerator(DataLabelSet):
             self.index += self.outer_instance.batch_size
             return points, labels
 
-    def __iter__(self) -> DataLabelIterator:
+    def __iter__(self) -> zip[np.ndarray, np.ndarray]:
         return self.DataLabelIterator(self)
-
+    
     def split(
         self,
         split_factor: float,
+        split_set_batch_size: int = None,
         split_set_name: str = ""
-    ) -> tuple[DataLabelBatchGenerator, DataLabelBatchGenerator]:
-        left_dataset, right_dataset = super().split(split_factor)
+    ) -> tuple[DataLabelSet, DataLabelSet]:
+        split_index = int(len(self) * split_factor)
 
-        left_dataset_batch_generator = DataLabelBatchGenerator.from_data_label_set(
-            left_dataset,
-            batch_size=self._batch_size,
-            name=self.name
+        left_dataset = DataLabelSet(
+            self._points[split_index:],
+            self._labels[split_index:],
+            name=self.name,
+            batch_size=self.batch_size
         )
 
-        right_dataset_batch_generator = DataLabelBatchGenerator.from_data_label_set(
-            right_dataset,
-            batch_size=self._batch_size,
-            name=split_set_name
+        split_set_batch_size = split_set_batch_size if split_set_batch_size is not None else self.batch_size
+        right_dataset = DataLabelSet(
+            self._points[:split_index],
+            self._labels[:split_index],
+            name=split_set_name,
+            batch_size=split_set_batch_size
         )
 
-        return left_dataset_batch_generator, right_dataset_batch_generator
-
-    @classmethod
-    def from_data_label_set(
-        cls,
-        data_label_set: DataLabelSet,
-        batch_size=128,
-        name: str = ""
-    ) -> DataLabelBatchGenerator:
-        return cls(
-            data_label_set._points,
-            data_label_set._labels,
-            batch_size=batch_size,
-            name=name if name else data_label_set.name
-        )
-    
+        return left_dataset, right_dataset
