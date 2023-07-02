@@ -46,6 +46,12 @@ class DataLabelSet:
 
     def __len__(self):
         return len(self._points)
+    
+    def split(self, split_factor: float, split_set_name="") -> tuple[DataLabelSet, DataLabelSet]:
+        split_index = int(len(self._points) * split_factor)
+        left_dataset = DataLabelSet(self._points[:split_index], self._labels[:split_index], name=self.name)
+        right_dataset = DataLabelSet(self._points[split_index:], self._labels[split_index:], name=split_set_name)
+        return left_dataset, right_dataset
 
 
 class DataLabelBatchGenerator(DataLabelSet):
@@ -73,3 +79,16 @@ class DataLabelBatchGenerator(DataLabelSet):
 
     def __iter__(self) -> DataLabelIterator:
         return self.DataLabelIterator(self)
+    
+    @classmethod
+    def from_data_label_set(cls, data_label_set: DataLabelSet, batch_size=128):
+        return cls(data_label_set._points, data_label_set._labels, batch_size=batch_size, name=data_label_set.name)
+
+    def split(self, split_factor: float, split_set_name="") -> tuple[DataLabelBatchGenerator, DataLabelBatchGenerator]:
+        left_dataset, right_dataset = super().split(split_factor)
+        left_dataset_points, left_dataset_labels = left_dataset.get()
+        right_dataset_points, right_dataset_labels = right_dataset.get()
+        left_dataset_batch_generator = DataLabelBatchGenerator(left_dataset_points, left_dataset_labels, batch_size=self._batch_size, name=self.name)
+        right_dataset_batch_generator = DataLabelBatchGenerator(left_dataset_points, left_dataset_labels, batch_size=self._batch_size, name=split_set_name)
+        return left_dataset_batch_generator, right_dataset_batch_generator
+    
