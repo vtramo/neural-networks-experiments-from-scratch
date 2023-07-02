@@ -29,17 +29,11 @@ if __name__ == '__main__':
     test_labels = one_hot(test_labels)
 
     # Training data / Validation data
-    val_split = 0.3
-    num_samples_val_set = int(len(train_images) * val_split)
-    train_images = train_images[num_samples_val_set:]
-    train_labels = train_labels[num_samples_val_set:]
-    val_images = train_images[:num_samples_val_set]
-    val_labels = train_labels[:num_samples_val_set]
+    training_set = DataLabelSet(train_images, train_labels, name="training")
+    training_set, validation_set = training_set.split(split_factor=0.3)
+    training_set = DataLabelBatchGenerator.from_data_label_set(training_set, len(training_set))
 
     # Train the network
-    training_set = DataLabelBatchGenerator(train_images, train_labels, batch_size=len(train_images), name="training")
-    validation_set = DataLabelSet(val_images, val_labels, name="validation")
-
     trainer = NetworkTrainer(
         net=net,
         update_rule=RPropPlus(),
@@ -47,4 +41,4 @@ if __name__ == '__main__':
         metrics=[Accuracy()]
     )
 
-    history = trainer.train_network(training_set, validation_set, epochs=1000)
+    history = trainer.train_network(training_set, validation_set, epochs=100)
