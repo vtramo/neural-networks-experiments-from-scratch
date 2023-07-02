@@ -32,17 +32,6 @@ class ParametersWithMetrics:
     def __post_init__(self) -> None:
         self.parameters = copy.deepcopy(self.parameters)
 
-    @property
-    def parameters(self) -> np.ndarray:
-        return self.parameters
-
-    @parameters.setter
-    def parameters(self, parameters_with_metrics: tuple[np.ndarray, MetricResults, int]) -> None:
-        parameters, metric_results, epoch = parameters_with_metrics
-        self.parameters = parameters_with_metrics
-        self.metric_results = metric_results
-        self.epoch = epoch
-
 
 @dataclass(slots=True)
 class TrainingHistory:
@@ -112,7 +101,10 @@ class NetworkTrainer:
             validation_metric_results = self.__evaluate_net(validation_set, training_set_batch_generator)
 
             if self.__last_loss < self.__best_parameters.loss:
-                self.__best_parameters.parameters = (self.__net.parameters, validation_metric_results, epoch)
+                self.__best_parameters.parameters = self.__net.parameters
+                self.__best_parameters.metric_results = validation_metric_results
+                self.__best_parameters.loss = self.__last_loss
+                self.__best_parameters.epoch = epoch
 
             self.__print_epoch_info()
 
