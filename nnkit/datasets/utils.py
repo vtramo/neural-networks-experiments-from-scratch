@@ -46,13 +46,16 @@ class DataLabelSet:
     def fair_divide(self, workers: int) -> tuple[list[list], list[list]]:
         return fair_divide(self._points, self._labels, workers=workers)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._points)
+
+    def __iter__(self) -> zip[np.ndarray, np.ndarray]:
+        return zip(self._points, self._labels)
     
-    def split(self, split_factor: float, split_set_name="") -> tuple[DataLabelSet, DataLabelSet]:
-        split_index = int(len(self._points) * split_factor)
-        left_dataset = DataLabelSet(self._points[:split_index], self._labels[:split_index], name=self.name)
-        right_dataset = DataLabelSet(self._points[split_index:], self._labels[split_index:], name=split_set_name)
+    def split(self, split_factor: float, split_set_name: str = "") -> tuple[DataLabelSet, DataLabelSet]:
+        split_index = int(len(self) * split_factor)
+        left_dataset = DataLabelSet(self._points[split_index:], self._labels[split_index:], name=self.name)
+        right_dataset = DataLabelSet(self._points[:split_index], self._labels[:split_index], name=split_set_name)
         return left_dataset, right_dataset
 
 
