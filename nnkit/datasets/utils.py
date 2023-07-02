@@ -32,10 +32,11 @@ def fair_divide(*iterables: list, workers: int) -> list[list]:
 
 class DataLabelSet:
 
-    def __init__(self, points, labels):
+    def __init__(self, points: np.ndarray, labels: np.ndarray, name: str = ""):
         assert len(points) == len(labels)
         self._points = points
         self._labels = labels
+        self.name = name
 
     def get(self) -> tuple[np.ndarray, np.ndarray]:
         return self._points, self._labels
@@ -49,8 +50,8 @@ class DataLabelSet:
 
 class DataLabelBatchGenerator(DataLabelSet):
 
-    def __init__(self, points, labels, batch_size=128):
-        super().__init__(points, labels)
+    def __init__(self, points: np.ndarray, labels: np.ndarray, batch_size=128, name: str = ""):
+        super().__init__(points, labels, name)
         self.batch_size = batch_size
         self.num_batches = math.ceil(len(points) / batch_size)
 
