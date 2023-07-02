@@ -1,5 +1,5 @@
-from .actfun import ActivationFunction, Identity, Softmax
-from .lossfun import LossFunction
+from nnkit.activations import ActivationFunction, Identity, Softmax
+from nnkit.losses import LossFunction
 import numpy as np
 
 

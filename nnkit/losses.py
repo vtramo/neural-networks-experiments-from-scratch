@@ -4,6 +4,9 @@ from abc import ABCMeta, abstractmethod
 
 class LossFunction(object, metaclass=ABCMeta):
 
+    def __init__(self, name: str = "loss"):
+        self.name = name
+
     @abstractmethod
     def __call__(self, prediction: np.ndarray, gold_label: np.ndarray) -> float:
         pass
@@ -14,6 +17,9 @@ class LossFunction(object, metaclass=ABCMeta):
 
 
 class CrossEntropy(LossFunction):
+
+    def __init__(self, name: str = "cross_entropy_loss"):
+        super().__init__(name)
 
     def __call__(self, predictions: np.ndarray, gold_labels: np.ndarray) -> float:
         axis = int((predictions.ndim == 2))
