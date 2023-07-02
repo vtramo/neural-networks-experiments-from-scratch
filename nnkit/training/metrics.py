@@ -133,21 +133,24 @@ class MetricsEvaluator:
 
 class Loss(Metrics[float]):
 
-    def __init__(self, loss_function: LossFunction, loss: float = 0.0, name: str = ""):
+    def __init__(self, loss_function: LossFunction, losses: np.ndarray = np.empty(0), name: str = ""):
         super().__init__(name)
         self._loss_function = loss_function
-        self._loss = loss
+        self._losses = losses
 
     def result(self) -> float:
-        return self._loss
+        if not np.any(self._losses):
+            return 0.0
+
+        return np.mean(self._losses)
 
     def combine(self, metric: Loss) -> Loss:
-        loss = np.mean([self._loss, metric._loss])
-        return Loss(self._loss_function, loss, self.name)
+        losses = np.concatenate((self._losses, metric._losses))
+        return Loss(self._loss_function, losses, name=self.name)
 
     def update(self, predictions: np.ndarray, labels: np.ndarray) -> Loss:
-        loss = np.mean(self._loss_function(predictions, labels))
-        return self.combine(metric=Loss(self._loss_function, loss, self.name))
+        losses = np.concatenate((self._loss_function(predictions, labels), self._losses))
+        return Loss(self._loss_function, losses, name=self.name)
 
     def reset(self) -> Loss:
         return Loss(self._loss_function, name=self.name)
