@@ -116,9 +116,10 @@ class NetworkTrainer:
 
             self.__print_epoch_info()
 
-        self.__net.parameters = best_parameters.parameters
+        self.__net.parameters = self.__best_parameters.parameters
+        history = self.__train_history
         self.__reset_trainer()
-        return self.__train_history
+        return history
 
     def __compute_gradients(self, points: np.ndarray, labels: np.ndarray) -> None:
         if self.__is_multiprocessing_allowed(num_samples_dataset=len(points)):
@@ -171,7 +172,7 @@ class NetworkTrainer:
         print(f"Epoch {self.__current_epoch + 1} - {epoch_info}")
 
     def __reset_trainer(self):
-        self.__gradients = np.zeros(net.parameters.shape, dtype=object)
+        self.__gradients = np.zeros(self.__net.parameters.shape, dtype=object)
         self.__last_loss = 0.0
         self.__current_epoch = 0
         self.__best_parameters = ParametersWithMetrics(parameters=self.__net.parameters, epoch=0)
