@@ -3,6 +3,7 @@ from nnkit.activations import Softmax, ReLU
 from nnkit.losses import CrossEntropySoftmax
 from nnkit.datasets import mnist
 from nnkit.datasets.utils import DataLabelSet, one_hot
+from nnkit.training.model_selection import KFold
 from nnkit.training.neurotrain import NetworkTrainer
 from nnkit.training.update_rules import SGD, RPropPlus, IRPropPlus, RPropMinus, IRPropMinus
 from nnkit.training.metrics import Accuracy
@@ -39,8 +40,17 @@ if __name__ == '__main__':
         net=net,
         update_rule=SGD(learning_rate=0.1, momentum=0.9),
         loss_function=CrossEntropySoftmax(),
-        metrics=[Accuracy()],
+        metrics=[Accuracy(name='accuracy')],
         multiprocessing=False
     )
+
+    kfold = KFold(k=5, shuffle=False)
+    results = []
+    for train_data, test_data in kfold(training_set):
+        history = trainer.train_network(train_data, test_data, epochs = 3)
+        trainer.net.reset_parameters()
+        results.append(history.best_parameters.metric_results['test_accuracy'])
+
+    print(results)
 
     history = trainer.train_network(training_set, validation_set, epochs=2000)
