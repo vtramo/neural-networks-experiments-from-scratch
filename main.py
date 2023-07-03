@@ -8,7 +8,6 @@ from nnkit.training.neurotrain import NetworkTrainer
 from nnkit.training.update_rules import SGD, RPropPlus, IRPropPlus, RPropMinus, IRPropMinus
 from nnkit.training.metrics import Accuracy
 
-
 if __name__ == '__main__':
 
     # Build Network
@@ -47,10 +46,8 @@ if __name__ == '__main__':
     kfold = KFold(k=5, shuffle=False)
     results = []
     for train_data, test_data in kfold(training_set):
-        history = trainer.train_network(train_data, test_data, epochs = 3)
+        history = trainer.train_network(train_data, test_data, epochs=3)
         trainer.net.reset_parameters()
         results.append(history.best_parameters.metric_results['test_accuracy'])
 
-    print(results)
-
-    history = trainer.train_network(training_set, validation_set, epochs=2000)
+    print([str(result) for result in results])

@@ -105,6 +105,7 @@ class NetworkTrainer:
                 self.__best_parameters.metric_results = validation_metric_results
                 self.__best_parameters.loss = self.__last_loss
                 self.__best_parameters.epoch = epoch
+                self.__train_history.best_parameters = self.__best_parameters
 
             self.__print_epoch_info()
 
