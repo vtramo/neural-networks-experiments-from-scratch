@@ -27,7 +27,7 @@ if __name__ == '__main__':
     test_labels = one_hot(test_labels)
 
     # Training data / Validation data
-    training_set = DataLabelSet(train_images, train_labels, batch_size=1, name='training')
+    training_set = DataLabelSet(train_images, train_labels, batch_size=len(train_images), name='training')
     training_set, validation_set = training_set.split(
         split_factor=0.3,
         split_set_batch_size=len(train_images),
@@ -37,16 +37,16 @@ if __name__ == '__main__':
     # Train the network
     trainer = NetworkTrainer(
         net=net,
-        update_rule=SGD(learning_rate=0.1, momentum=0.9),
+        update_rule=IRPropPlus(),
         loss_function=CrossEntropySoftmax(),
         metrics=[Accuracy(name='accuracy')],
-        multiprocessing=False
+        multiprocessing=True
     )
 
     kfold = KFold(k=5, shuffle=False)
     results = []
     for train_data, test_data in kfold(training_set):
-        history = trainer.train_network(train_data, test_data, epochs=3)
+        history = trainer.train_network(train_data, test_data, epochs=30)
         trainer.net.reset_parameters()
         results.append(history.best_parameters.metric_results['test_accuracy'])
 
