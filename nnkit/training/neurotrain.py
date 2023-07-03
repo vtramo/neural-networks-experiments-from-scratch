@@ -169,3 +169,7 @@ class NetworkTrainer:
         self.__current_epoch = 0
         self.__best_parameters = ParametersWithMetrics(parameters=self.__net.parameters, epoch=0)
         self.__train_history: TrainingHistory = None
+
+    @property
+    def net(self) -> DenseNetwork:
+        return self.__net
