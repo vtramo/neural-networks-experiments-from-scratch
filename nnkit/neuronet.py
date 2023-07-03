@@ -115,6 +115,9 @@ class DenseNetwork:
             self.__parameters[index_layer] = layer_weights
             prev_layer = layer
 
+    def reset_parameters(self) -> None:
+        self.__init_parameters(*self.__layers)
+
     @property
     def parameters(self) -> np.ndarray:
         return self.__parameters
