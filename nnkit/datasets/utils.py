@@ -69,7 +69,7 @@ class DataLabelSet:
 
     def __iter__(self) -> zip[np.ndarray, np.ndarray]:
         return self.DataLabelIterator(self)
-    
+
     def split(
         self,
         split_factor: float,
@@ -94,3 +94,9 @@ class DataLabelSet:
         )
 
         return left_dataset, right_dataset
+    
+    def __getitem__(self, indices):
+        points = self._points[indices]
+        labels = self._labels[indices]
+
+        return DataLabelSet(points, labels, batch_size=self.batch_size, name=self.name)
