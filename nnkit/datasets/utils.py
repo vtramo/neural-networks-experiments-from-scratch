@@ -69,7 +69,7 @@ class DataLabelSet:
 
     def __iter__(self) -> zip[np.ndarray, np.ndarray]:
         return self.DataLabelIterator(self)
-
+    
     def split(
         self,
         split_factor: float,
