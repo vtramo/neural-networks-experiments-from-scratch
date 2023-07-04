@@ -39,7 +39,7 @@ class TrainingHistory:
     steps: int
     update_rule: str = ""
     best_parameters: ParametersWithMetrics = None
-    history: list[dict[str, MetricResults]] = field(default_factory=lambda: [None])
+    history: list[dict[str, Metrics]] = field(default_factory=lambda: [None])
 
     def __post_init__(self):
         self.history = [None] * self.epochs
