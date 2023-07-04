@@ -8,18 +8,23 @@ import numpy as np
 
 
 class KFold:
+
     def __init__(self, k: int = 5, shuffle: bool = False):
         self.k = k
         self.shuffle = shuffle
 
-    class KFoldGenerator(Iterator[tuple[DataLabelSet, DataLabelSet]]):
+    class KFoldGenerator:
+
         def __init__(self, k: int, points_folds: list[np.ndarray], labels_folds: list[np.ndarray]):
             self.points_folds = points_folds
             self.labels_folds = labels_folds
             self.k = k
             self.__index = self.k-1
 
-        def __next__(self):
+        def __iter__(self) -> self.KFoldGenerator:
+            return self
+
+        def __next__(self) -> tuple[DataLabelSet, DataLabelSet]:
             if self.__index < 0:
                 raise StopIteration
             
@@ -35,12 +40,11 @@ class KFold:
             train_labels = np.concatenate(left_labels_folds + right_labels_folds)
 
             self.__index -= 1
-
             train_set = DataLabelSet(train_points, train_labels, name='training')
             test_set = DataLabelSet(test_points, test_labels, name='test')
             return train_set, test_set
     
-    def __call__(self, dataset: DataLabelSet) -> list[tuple[DataLabelSet, DataLabelSet]]:
+    def __call__(self, dataset: DataLabelSet) -> KFoldGenerator:
         points_folds, labels_folds = dataset.fair_divide(self.k)
         generator = self.KFoldGenerator(self.k, points_folds, labels_folds)
         return generator

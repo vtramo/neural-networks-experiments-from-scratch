@@ -20,8 +20,8 @@ if __name__ == '__main__':
     # Load data / Data pre-processing
     (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
     train_images = train_images.reshape((60000, 28 * 28))
-    train_images = (train_images.astype('float32') / 255)[:200]
-    train_labels = one_hot(train_labels)[:200]
+    train_images = (train_images.astype('float32') / 255)[:237]
+    train_labels = one_hot(train_labels)[:237]
     test_images = test_images.reshape((10000, 28 * 28))
     test_images = test_images.astype('float32') / 255
     test_labels = one_hot(test_labels)
@@ -33,14 +33,13 @@ if __name__ == '__main__':
         net=net,
         update_rule=IRPropPlus(),
         loss_function=CrossEntropySoftmax(),
-        metrics=[Accuracy(name='accuracy')],
-        multiprocessing=True
+        metrics=[Accuracy(name='accuracy')]
     )
 
     kfold = KFold(k=5, shuffle=False)
     results = []
     for train_data, test_data in kfold(training_set):
-        history = trainer.train_network(train_data, test_data, epochs=5)
+        history = trainer.train_network(train_data, test_data, epochs=1)
         trainer.net.reset_parameters()
         results.append(history.best_parameters.metric_results['test_accuracy'])
 
