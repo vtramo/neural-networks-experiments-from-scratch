@@ -20,21 +20,15 @@ if __name__ == '__main__':
     # Load data / Data pre-processing
     (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
     train_images = train_images.reshape((60000, 28 * 28))
-    train_images = (train_images.astype('float32') / 255)[:100]
-    train_labels = one_hot(train_labels)[:100]
+    train_images = (train_images.astype('float32') / 255)[:200]
+    train_labels = one_hot(train_labels)[:200]
     test_images = test_images.reshape((10000, 28 * 28))
     test_images = test_images.astype('float32') / 255
     test_labels = one_hot(test_labels)
 
-    # Training data / Validation data
+    # Evaluate the network
     training_set = DataLabelSet(train_images, train_labels, batch_size=len(train_images), name='training')
-    training_set, validation_set = training_set.split(
-        split_factor=0.3,
-        split_set_batch_size=len(train_images),
-        split_set_name='validation'
-    )
 
-    # Train the network
     trainer = NetworkTrainer(
         net=net,
         update_rule=IRPropPlus(),
@@ -46,7 +40,7 @@ if __name__ == '__main__':
     kfold = KFold(k=5, shuffle=False)
     results = []
     for train_data, test_data in kfold(training_set):
-        history = trainer.train_network(train_data, test_data, epochs=30)
+        history = trainer.train_network(train_data, test_data, epochs=5)
         trainer.net.reset_parameters()
         results.append(history.best_parameters.metric_results['test_accuracy'])
 
