@@ -5,11 +5,12 @@ from nnkit.activations import Softmax, ReLU
 from nnkit.losses import CrossEntropySoftmax
 from nnkit.datasets import mnist
 from nnkit.datasets.utils import DataLabelSet, one_hot
-from nnkit.plotlib import plot_training_histories, plot_training_history
+from nnkit.plotlib import load_histories_from_file, plot_training_histories, plot_training_history, save_histories_to_file
 from nnkit.training.model_selection import KFold
 from nnkit.training.neurotrain import NetworkTrainer, TrainingHistory
 from nnkit.training.update_rules import SGD, RPropPlus, IRPropPlus, RPropMinus, IRPropMinus
 from nnkit.training.metrics import Accuracy
+from datetime import datetime
 
 if __name__ == '__main__':
 
@@ -48,5 +49,7 @@ if __name__ == '__main__':
         history = trainer.train_network(training_set, validation_set, epochs=5)
 
         histories.append(history)
-    
+
+    save_histories_to_file(histories, 'history.pkl')
+
     plot_training_histories(histories, 'validation_accuracy', show_plot=True, path='validation_accuracy.png')
