@@ -1,6 +1,19 @@
 from nnkit.training.neurotrain import TrainingHistory
 import matplotlib.pyplot as plt
 import numpy as np
+import pickle
+
+
+def load_histories_from_file(path: str) -> list[TrainingHistory]:
+    with open(path, 'rb') as file:
+        histories = pickle.load(file)
+    return histories
+
+def save_histories_to_file(histories: list[TrainingHistory], path: str):
+    with open(path, 'wb') as file:
+        pickle.dump(histories, file)
+
+
 
 
 def plot_training_history(
