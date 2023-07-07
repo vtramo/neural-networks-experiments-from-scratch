@@ -14,8 +14,6 @@ def save_histories_to_file(histories: list[TrainingHistory], path: str):
         pickle.dump(histories, file)
 
 
-
-
 def plot_training_history(
     train_history: TrainingHistory,
     metrics: set[str] = None,
