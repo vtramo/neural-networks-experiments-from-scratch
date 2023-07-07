@@ -125,8 +125,8 @@ if __name__ == '__main__':
     test_labels = one_hot(test_labels)
 
     # Evaluate the network
-    training_set = DataLabelSet(train_images, train_labels, name='training')
-    training_set, validation_set = training_set.split(split_factor=0.3, split_set_name='validation')
+    training_set = DataLabelSet(train_images, train_labels, batch_size=batch_size, name='training')
+    training_set, validation_set = training_set.split(split_factor=0.2, split_set_name='validation')
 
     histories = []
 
