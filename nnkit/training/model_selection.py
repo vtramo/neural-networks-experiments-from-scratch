@@ -40,8 +40,8 @@ class KFold:
             train_labels = np.concatenate(left_labels_folds + right_labels_folds)
 
             self.__index -= 1
-            train_set = DataLabelSet(train_points, train_labels, name='training')
-            test_set = DataLabelSet(test_points, test_labels, name='test')
+            train_set = DataLabelSet(train_points, train_labels, name='training', batch_size=len(train_points))
+            test_set = DataLabelSet(test_points, test_labels, name='test', batch_size=len(test_points))
             return train_set, test_set
     
     def __call__(self, dataset: DataLabelSet) -> KFoldGenerator:
