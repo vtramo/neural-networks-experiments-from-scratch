@@ -1,12 +1,12 @@
 from nnkit.datasets import mnist
 from nnkit.datasets.utils import DataLabelSet, one_hot
 from nnkit.training.model_selection import KFold
-from nnkit.training.neurotrain import NetworkTrainer, TrainingHistory
-from nnkit.training.update_rules import SGD, RPropPlus, IRPropPlus, RPropMinus, IRPropMinus
-from nnkit.training.metrics import Accuracy, MetricsEvaluator
-from nnkit.neuronet import DenseLayer, DenseNetwork
-from nnkit.activations import Sigmoid, Softmax, ReLU
-from nnkit.losses import CrossEntropySoftmax
+from nnkit.training.neurotrain import NetworkTrainer
+from nnkit.training.update_rules import IRPropPlus
+from nnkit.training.metrics import Accuracy
+from nnkit.core.neuronet import DenseLayer, DenseNetwork
+from nnkit.core.activations import Softmax, ReLU
+from nnkit.core.losses import CrossEntropySoftmax
 from nnkit.plotlib import save_histories_to_file
 
 

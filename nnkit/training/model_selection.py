@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 from nnkit.datasets.utils import DataLabelSet
-from nnkit.neuronet import DenseNetwork
-from nnkit.training.neurotrain import NetworkTrainer
 
 import numpy as np
 

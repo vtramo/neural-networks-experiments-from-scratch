@@ -1,15 +1,14 @@
 from __future__ import annotations
 
-from nnkit.neuronet import DenseNetwork
-from nnkit.losses import LossFunction
+from nnkit.core.neuronet import DenseNetwork
+from nnkit.core.losses import LossFunction
 from nnkit.training.update_rules import UpdateRule
-from nnkit.training.metrics import MetricResults, Metrics, MetricsEvaluator, Loss
+from nnkit.training.metrics import MetricResults, Metrics, MetricsEvaluator
 from nnkit.datasets.utils import fair_divide, DataLabelSet
 
 from os import cpu_count
 from multiprocessing import Pool
 from dataclasses import dataclass, field
-from typing import Any
 
 import copy
 import numpy as np

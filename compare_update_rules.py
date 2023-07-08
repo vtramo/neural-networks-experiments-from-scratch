@@ -1,14 +1,12 @@
-from nnkit.losses import CrossEntropySoftmax
+from nnkit.core.losses import CrossEntropySoftmax
 from nnkit.training.metrics import Accuracy
-from nnkit.training.update_rules import SGD, RPropPlus, IRPropPlus, RPropMinus, IRPropMinus
+from nnkit.training.update_rules import RPropPlus, IRPropPlus
 from nnkit.datasets import mnist
 from nnkit.datasets.utils import DataLabelSet, one_hot
 from nnkit.training.neurotrain import NetworkTrainer
 from nnkit.confignet import interactive_build_network
 from nnkit.plotlib import (
-    load_histories_from_file,
     plot_training_histories,
-    plot_training_history,
     save_histories_to_file
 )
 

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from nnkit.datasets.utils import DataLabelSet
-from nnkit.losses import LossFunction
-from nnkit.neuronet import DenseNetwork
+from nnkit.core.losses import LossFunction
+from nnkit.core.neuronet import DenseNetwork
 
 from multiprocessing import Pool
 from typing import Generic, TypeVar

@@ -1,5 +1,5 @@
 from nnkit import DenseNetwork, DenseLayer
-from nnkit.activations import ReLU, Softmax, Sigmoid
+from nnkit.core.activations import ReLU, Softmax, Sigmoid
 
 from datetime import date
 
