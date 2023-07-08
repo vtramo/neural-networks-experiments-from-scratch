@@ -18,7 +18,10 @@ class ActivationFunction(object, metaclass=ABCMeta):
 class Sigmoid(ActivationFunction):
 
     def __call__(self, a: float) -> float:
-        return 1 / (1 + np.exp(-a))
+        if a >= 0:
+            return 1 / (1 + np.exp(-a))
+        else:
+            return np.exp(a) / (1 + np.exp(a))
 
     def derivative(self, a: float) -> float:
         sigma_a = self(a)
