@@ -5,18 +5,16 @@ This repository contains code for creating and training neural networks using on
 ## Usage example
 
 ```python
-from nnkit.neuronet import DenseLayer, DenseNetwork
-from nnkit.activations import Softmax, ReLU
-from nnkit.losses import CrossEntropySoftmax
+from nnkit.core.neuronet import DenseLayer, DenseNetwork
+from nnkit.core.activations import Softmax, ReLU
+from nnkit.core.losses import CrossEntropySoftmax
 from nnkit.datasets import mnist
 from nnkit.datasets.utils import DataLabelSet, one_hot
 from nnkit.training.neurotrain import NetworkTrainer
 from nnkit.training.update_rules import SGD, RPropPlus, IRPropPlus, RPropMinus, IRPropMinus
 from nnkit.training.metrics import Accuracy
 
-
 if __name__ == '__main__':
-
     # Build Network
     net = DenseNetwork(
         DenseLayer(num_inputs=784, num_neurons=500, activation_function=ReLU()),
@@ -27,8 +25,8 @@ if __name__ == '__main__':
     # Load data / Data pre-processing
     (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
     train_images = train_images.reshape((60000, 28 * 28))
-    train_images = (train_images.astype('float32') / 255)[:100]
-    train_labels = one_hot(train_labels)[:100]
+    train_images = (train_images.astype('float32') / 255)
+    train_labels = one_hot(train_labels)
     test_images = test_images.reshape((10000, 28 * 28))
     test_images = test_images.astype('float32') / 255
     test_labels = one_hot(test_labels)
@@ -50,5 +48,5 @@ if __name__ == '__main__':
         multiprocessing=False
     )
 
-    history = trainer.train_network(training_set, validation_set, epochs=2000)
+    history = trainer.train_network(training_set, validation_set, epochs=50)
 ```
