@@ -1,30 +1,25 @@
-import random
-from matplotlib import pyplot as plt
-import numpy as np
-from nnkit.neuronet import DenseLayer, DenseNetwork
-from nnkit.activations import Softmax, ReLU
-from nnkit.losses import CrossEntropySoftmax
-from nnkit.datasets import mnist
-from nnkit.datasets.utils import DataLabelSet, one_hot
-from nnkit.plotlib import load_histories_from_file, plot_training_histories, plot_training_history, save_histories_to_file
-from nnkit.training.model_selection import KFold
-from nnkit.training.neurotrain import NetworkTrainer, TrainingHistory
-from nnkit.training.update_rules import SGD, RPropPlus, IRPropPlus, RPropMinus, IRPropMinus
-from nnkit.training.metrics import Accuracy, MetricsEvaluator
-from datetime import datetime
+from nnkit import DenseNetwork, DenseLayer
+from nnkit.activations import ReLU, Softmax, Sigmoid
 
-def read_activation_functions(input: str):
-    if input == 'relu':
+from datetime import date
+
+
+def read_activation_functions(activation_function: str):
+    if activation_function == 'relu':
         return ReLU()
-    elif input == 'softmax':
+    elif activation_function == 'softmax':
         return Softmax()
+    elif activation_function == 'sigmoid':
+        return Sigmoid()
     else:
         raise ValueError('Invalid activation function')
-    
+
+
 def save_config_to_file(config: dict, path: str):
     with open(path, 'w') as file:
         for key, value in config.items():
             file.write(str(key) + ': ' + str(value) + '\n')
+
 
 def load_config_from_file(path: str):
     with open(path, 'r') as file:
@@ -34,10 +29,9 @@ def load_config_from_file(path: str):
             key, value = line.split(':')
             config[key.strip()] = value
         return config
-            
+
 
 def get_data_from_input():
-
     print('Would you like to load a configuration from file? (y/n)')
     if input() == 'y':
         print('Enter the path to the configuration file:')
@@ -84,9 +78,11 @@ def get_data_from_input():
             'batch_size': batch_size,
             'split_factor': split_factor
         }
-        save_config_to_file(config, f"configs/last_config")
+        path = f'configs/config-{date.today()}'
+        save_config_to_file(config, path=path)
 
     return num_inputs, num_layers, num_neurons, activation_functions, sample_size, epochs, batch_size, split_factor
+
 
 def get_default_values():
     num_inputs = 784
@@ -101,49 +97,28 @@ def get_default_values():
     return num_inputs, num_layers, num_neurons, activation_functions, sample_size, epochs, batch_size, split_factor
 
 
-if __name__ == '__main__':
+INTERACTIVE_MESSAGE_BUILD_NET = '''
+Want to use default values? [num_inputs=784, num_layers=3, num_neurons=(500,200,10), act_fun=(relu,relu,softmax), \
+sample_size=60000, epochs=10, batch_size=60000, validation_split_factor=0.3] (y/n)\
+'''
 
-    print('Want to use default values? [num_inputs=784, num_layers=3, num_neurons=(500,200,10), act_fun=(relu,relu,softmax), sample_size=60000, epochs=10, batch_size=60000, validation_split_factor=0.3] (y/n)')
-    if input() == 'y':
-        num_inputs, num_layers, num_neurons, activation_functions, sample_size, epochs, batch_size, split_factor = get_default_values()
-    else:
-        num_inputs, num_layers, num_neurons, activation_functions, sample_size, epochs, batch_size, split_factor = get_data_from_input()
 
-    # Build Network
+def interactive_build_network() -> tuple[DenseNetwork, int, int, int, float]:
+    print(INTERACTIVE_MESSAGE_BUILD_NET)
+
+    (num_inputs,
+     num_layers,
+     num_neurons,
+     activation_functions,
+     sample_size,
+     epochs,
+     batch_size,
+     split_factor) = get_default_values() if input() == 'y' else get_data_from_input()
+
     net = DenseNetwork(
         DenseLayer(num_inputs=num_inputs, num_neurons=num_neurons[0], activation_function=activation_functions[0]),
-        *[DenseLayer(num_neurons=num_neurons[i], activation_function=activation_functions[i]) for i in range(1, num_layers)]
+        *[DenseLayer(num_neurons=num_neurons[i], activation_function=activation_functions[i]) for i in
+          range(1, num_layers)]
     )
 
-    # Load data / Data pre-processing
-    (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
-    train_images = train_images.reshape((60000, 28 * 28))
-    train_images = (train_images.astype('float32') / 255)[:sample_size]
-    train_labels = one_hot(train_labels)[:sample_size]
-    test_images = test_images.reshape((10000, 28 * 28))
-    test_images = test_images.astype('float32') / 255
-    test_labels = one_hot(test_labels)
-
-    # Evaluate the network
-    training_set = DataLabelSet(train_images, train_labels, batch_size=batch_size, name='training')
-    training_set, validation_set = training_set.split(split_factor=split_factor, split_set_name='validation')
-
-    histories = []
-
-    for update_rule in [RPropPlus(), IRPropPlus(), RPropMinus(), IRPropMinus()]:
-        
-        trainer = NetworkTrainer(
-            net=net,
-            update_rule=update_rule,
-            loss_function=CrossEntropySoftmax(),
-            metrics=[Accuracy(name='accuracy')]
-        )
-
-        trainer.net.reset_parameters()
-        history = trainer.train_network(training_set, validation_set, epochs=epochs)
-
-        histories.append(history)
-
-    save_histories_to_file(histories, 'train_history.pkl')
-
-    plot_training_histories(histories, 'validation_accuracy', show_plot=True, path='validation_accuracy.png')
+    return net, sample_size, epochs, batch_size, split_factor

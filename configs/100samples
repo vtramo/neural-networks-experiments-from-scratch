@@ -1,8 +1,0 @@
-num_inputs: 784
-num_layers: 3
-num_neurons: [500, 200, 10]
-activation_functions: ['relu', 'relu', 'softmax']
-sample_size: 100
-epochs: 10
-batch_size: 100
-split_factor: 0.3
