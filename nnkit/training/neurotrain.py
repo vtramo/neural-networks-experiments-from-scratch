@@ -68,7 +68,7 @@ class NetworkTrainer:
         self.__update_rule = update_rule
         self.__loss_function = loss_function
         self.__gradients = np.zeros(net.parameters.shape, dtype=object)
-        self.__last_loss = 0.0
+        self.__last_val_loss = 0.0
         self.__best_parameters = ParametersWithMetrics(parameters=self.__net.parameters, epoch=0)
         self.__multiprocessing = multiprocessing
         self.__train_history: TrainingHistory = None
@@ -82,7 +82,8 @@ class NetworkTrainer:
         self,
         training_set: DataLabelSet,
         validation_set: DataLabelSet,
-        epochs: int
+        epochs: int,
+        early_stopping: function[TrainingData, bool] | nnkit.training.stopping.StoppingCriterion = lambda _: False
     ) -> TrainingHistory:
 
         self.__train_history = TrainingHistory(
@@ -99,15 +100,13 @@ class NetworkTrainer:
                 self.__reset_gradients()
 
             val_metric_results, train_metric_results = self.__evaluate_net(validation_set, training_set)
-
-            if self.__last_loss < self.__best_parameters.loss:
-                self.__best_parameters.parameters = self.__net.parameters
-                self.__best_parameters.metric_results = val_metric_results
-                self.__best_parameters.loss = self.__last_loss
-                self.__best_parameters.epoch = epoch
-                self.__train_history.best_parameters = self.__best_parameters
-
+            self.__update_best_parameters(val_metric_results)
             self.__print_epoch_info()
+
+            train_data = TrainingData(val_loss=self.__last_val_loss, train_loss=self.__last_train_loss)
+            if early_stopping(train_data):
+                print("Stopped early!")
+                break
 
         self.__net.parameters = self.__best_parameters.parameters
         history = self.__train_history
@@ -136,7 +135,7 @@ class NetworkTrainer:
     def __update_parameters(self) -> None:
         gradients = copy.deepcopy(self.__gradients)
         parameters = copy.deepcopy(self.__net.parameters)
-        train_data = TrainingData(gradients, parameters, val_loss=self.__last_loss)
+        train_data = TrainingData(gradients, parameters, val_loss=self.__last_val_loss)
 
         self.__net.parameters = self.__update_rule(train_data)
 
@@ -152,13 +151,16 @@ class NetworkTrainer:
 
         validation_metric_results = self.__metrics_evaluator.compute_metrics(val_set)
         validation_loss_metric = validation_metric_results[self.__loss_function.name]
-        self.__last_loss = validation_loss_metric.result()
+        self.__last_val_loss = validation_loss_metric.result()
 
         validation_metric_prefix = "validation" if not val_set.name else val_set.name
         validation_metric_results.prefix(validation_metric_prefix)
         self.__train_history.store(validation_metric_results, epoch=self.__current_epoch)
 
         training_metric_results = self.__metrics_evaluator.compute_metrics(train_set)
+        training_loss_metric = training_metric_results[self.__loss_function.name]
+        self.__last_train_loss = training_loss_metric.result()
+
         training_metric_prefix = "training" if not train_set.name else train_set.name
         training_metric_results.prefix(training_metric_prefix)
         self.__train_history.store(training_metric_results, epoch=self.__current_epoch)
@@ -170,6 +172,16 @@ class NetworkTrainer:
 
         return validation_metric_results, training_metric_results
 
+    def __update_best_parameters(self, val_metric_results: MetricResults) -> None:
+        if self.__last_val_loss >= self.__best_parameters.loss:
+            return
+
+        self.__best_parameters.parameters = self.__net.parameters
+        self.__best_parameters.metric_results = val_metric_results
+        self.__best_parameters.loss = self.__last_val_loss
+        self.__best_parameters.epoch = self.__current_epoch
+        self.__train_history.best_parameters = self.__best_parameters
+
     def __print_epoch_info(self) -> None:
         last_metric_results = self.__train_history.history[self.__current_epoch]
         epoch_info = f"{[str(metric_result) for metric_result in last_metric_results.values()]}"
@@ -177,7 +189,7 @@ class NetworkTrainer:
 
     def __reset_trainer(self):
         self.__gradients = np.zeros(self.__net.parameters.shape, dtype=object)
-        self.__last_loss = 0.0
+        self.__last_val_loss = 0.0
         self.__current_epoch = 0
         self.__best_parameters = ParametersWithMetrics(parameters=self.__net.parameters, epoch=0)
         self.__train_history: TrainingHistory = None
