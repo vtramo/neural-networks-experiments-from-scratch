@@ -12,6 +12,7 @@ from nnkit.datasets import mnist
 from nnkit.datasets.utils import DataLabelSet, one_hot
 from nnkit.training.neurotrain import NetworkTrainer
 from nnkit.training.update_rules import SGD, RPropPlus, IRPropPlus, RPropMinus, IRPropMinus
+from nnkit.training.stopping import GLStoppingCriterion
 from nnkit.training.metrics import Accuracy
 
 if __name__ == '__main__':
@@ -48,5 +49,5 @@ if __name__ == '__main__':
         multiprocessing=False
     )
 
-    history = trainer.train_network(training_set, validation_set, epochs=50)
+    history = trainer.train_network(training_set, validation_set, epochs=150, early_stopping=GLStoppingCriterion(alpha=1))
 ```
