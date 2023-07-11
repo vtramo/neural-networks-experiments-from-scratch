@@ -3,6 +3,7 @@ from nnkit.training.neurotrain import TrainingData
 
 from abc import ABCMeta, abstractmethod
 from collections.abc import Callable
+from queue import Queue
 
 
 class StoppingCriterion(metaclass=ABCMeta):
@@ -61,3 +62,37 @@ class PQStoppingCriterion(GLStoppingCriterion):
     def _reset_strip(self) -> None:
         self._strip_index = 0
         self._train_strip = []
+
+
+class UPStoppingCriterion(StoppingCriterion):
+
+    def __init__(self, tot_strips: int, strip_size: int = 5):
+        self._tot_strips = tot_strips
+        self._strip_size = strip_size
+        self._val_strips_queue = Queue()
+        self._last_val_strip = []
+
+    def __call__(self, training_data: TrainingData) -> bool:
+        self._last_val_strip.append(training_data.val_loss)
+
+        if len(self._last_val_strip) == self._strip_size:
+            self._update_val_strips()
+
+        if not self._tot_strips_reached():
+            return False
+
+        return self._check_val_strips()
+
+    def _update_val_strips(self) -> None:
+        self._val_strips_queue.put(self._last_val_strip)
+        if self._tot_strips_reached():
+            self._val_strips_queue.get_nowait()
+
+    def _tot_strips_reached(self) -> bool:
+        return self._val_strips_queue.qsize() == self._tot_strips
+
+    def _check_val_strips(self) -> bool:
+        for val_strip in reversed(self._val_strips_queue.queue):
+            if val_strip[self._strip_size - 1] <= val_strip[0]:
+                return False
+        return True
