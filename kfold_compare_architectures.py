@@ -4,6 +4,7 @@ from nnkit.training.model_selection import KFold
 from nnkit.training.neurotrain import NetworkTrainer
 from nnkit.training.update_rules import IRPropPlus
 from nnkit.training.metrics import Accuracy
+from nnkit.training.stopping import GLStoppingCriterion
 from nnkit.core.neuronet import DenseLayer, DenseNetwork
 from nnkit.core.activations import Softmax, ReLU
 from nnkit.core.losses import CrossEntropySoftmax
@@ -64,7 +65,7 @@ if __name__ == '__main__':
                 metrics=[Accuracy()]
             )
 
-            history = trainer.train_network(training_set=train_set, validation_set=test_set, epochs=10)
+            history = trainer.train_network(training_set=train_set, validation_set=test_set, epochs=150, early_stopping=GLStoppingCriterion(alpha=1))
             histories.append(history)
             trainer.net.reset_parameters()
 
