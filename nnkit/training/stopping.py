@@ -12,3 +12,5 @@ class StoppingCriterion(metaclass=ABCMeta):
         pass
 
 
+def generalization_loss(val_loss: float, opt_val_loss: float) -> float:
+    return 100 * ((val_loss / opt_val_loss) - 1)
