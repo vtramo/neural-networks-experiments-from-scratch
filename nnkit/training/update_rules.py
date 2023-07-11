@@ -177,7 +177,7 @@ class IRPropPlus(RPropPlus):
         self._prev_loss = 0.0
 
     def __call__(self, train_data: TrainingData):
-        self._loss = train_data.loss
+        self._loss = train_data.val_loss
         updated_parameters = super().__call__(train_data)
         self._prev_loss = self._loss
         return updated_parameters

@@ -18,7 +18,8 @@ import numpy as np
 class TrainingData:
     gradients: np.ndarray
     parameters: np.ndarray
-    loss: float
+    val_loss: float
+    train_loss: float = None
 
 
 @dataclass(slots=True)
@@ -135,7 +136,7 @@ class NetworkTrainer:
     def __update_parameters(self) -> None:
         gradients = copy.deepcopy(self.__gradients)
         parameters = copy.deepcopy(self.__net.parameters)
-        train_data = TrainingData(gradients, parameters, loss=self.__last_loss)
+        train_data = TrainingData(gradients, parameters, val_loss=self.__last_loss)
 
         self.__net.parameters = self.__update_rule(train_data)
 
