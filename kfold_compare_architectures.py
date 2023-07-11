@@ -9,6 +9,17 @@ from nnkit.core.activations import Softmax, ReLU
 from nnkit.core.losses import CrossEntropySoftmax
 from nnkit.plotlib import save_histories_to_file
 
+from dataclasses import dataclass
+from datetime import datetime
+
+import numpy as np
+
+
+@dataclass(slots=True)
+class Evaluation:
+    mean: float
+    std: float
+
 
 if __name__ == '__main__':
 
@@ -35,13 +46,16 @@ if __name__ == '__main__':
     training_set = DataLabelSet(train_images, train_labels, batch_size=len(train_images), name='training')
 
     networks = [
-        ('net_32ReLU', net_32ReLU),
-        ('net_512ReLU', net_512ReLU)
+        ('32ReLU', net_32ReLU),
+        ('512ReLU', net_512ReLU)
     ]
 
+    accuracy_by_net = {}
     kfold = KFold()
     for net_name, net in networks:
+        accuracy_by_net[net_name] = []
         histories = []
+
         for i, (train_set, test_set) in enumerate(kfold(training_set)):
             trainer = NetworkTrainer(
                 net=net,
@@ -56,7 +70,14 @@ if __name__ == '__main__':
 
             best_parameters = history.best_parameters
             best_test_accuracy = best_parameters.metric_results.metric_by_name['test_accuracy']
-            print(f'KFold iteration {i} - {net_name} - best_test_accuracy: {test_accuracy.result()}')
+            accuracy_by_net[net_name].append(best_test_accuracy.result())
+            print(f'KFold iteration {i+1} - {net_name} - best_test_accuracy: {best_test_accuracy.result()}')
 
-        path = f'{net_name}-train-histories-kfold.pkl'
+        mean = np.mean(accuracy_by_net[net_name])
+        std = np.std(accuracy_by_net[net_name])
+        accuracy_by_net[net_name] = Evaluation(mean, std)
+        print(f'Evaluation {net_name}: {accuracy_by_net[net_name]}')
+
+        time = f'{datetime.today()}'.replace(' ', '-')
+        path = f'{net_name}-train-histories-kfold-{time}.pkl'
         save_histories_to_file(histories, path=path)
