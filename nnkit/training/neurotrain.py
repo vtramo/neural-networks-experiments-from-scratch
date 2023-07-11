@@ -97,11 +97,11 @@ class NetworkTrainer:
                 self.__update_parameters()
                 self.__reset_gradients()
 
-            validation_metric_results = self.__evaluate_net(validation_set, training_set)
+            val_metric_results, train_metric_results = self.__evaluate_net(validation_set, training_set)
 
             if self.__last_loss < self.__best_parameters.loss:
                 self.__best_parameters.parameters = self.__net.parameters
-                self.__best_parameters.metric_results = validation_metric_results
+                self.__best_parameters.metric_results = val_metric_results
                 self.__best_parameters.loss = self.__last_loss
                 self.__best_parameters.epoch = epoch
                 self.__train_history.best_parameters = self.__best_parameters
@@ -135,28 +135,39 @@ class NetworkTrainer:
     def __update_parameters(self) -> None:
         gradients = copy.deepcopy(self.__gradients)
         parameters = copy.deepcopy(self.__net.parameters)
-        train_data = TrainingData(gradients, parameters, self.__last_loss)
+        train_data = TrainingData(gradients, parameters, loss=self.__last_loss)
 
         self.__net.parameters = self.__update_rule(train_data)
 
     def __reset_gradients(self) -> None:
         self.__gradients = np.zeros(self.__net.parameters.shape, dtype=object)
 
-    def __evaluate_net(self, validation_set: DataLabelSet, *data_sets: DataLabelSet) -> MetricResults:
-        validation_metric_results = self.__metrics_evaluator.compute_metrics(validation_set)
-        loss_metric = validation_metric_results[self.__loss_function.name]
-        self.__last_loss = loss_metric.result()
+    def __evaluate_net(
+        self,
+        val_set: DataLabelSet,
+        train_set: DataLabelSet,
+        *data_sets: DataLabelSet
+    ) -> tuple[MetricResults, MetricResults]:
 
-        validation_metric_prefix = "validation" if not validation_set.name else validation_set.name
+        validation_metric_results = self.__metrics_evaluator.compute_metrics(val_set)
+        validation_loss_metric = validation_metric_results[self.__loss_function.name]
+        self.__last_loss = validation_loss_metric.result()
+
+        validation_metric_prefix = "validation" if not val_set.name else val_set.name
         validation_metric_results.prefix(validation_metric_prefix)
         self.__train_history.store(validation_metric_results, epoch=self.__current_epoch)
+
+        training_metric_results = self.__metrics_evaluator.compute_metrics(train_set)
+        training_metric_prefix = "training" if not train_set.name else train_set.name
+        training_metric_results.prefix(training_metric_prefix)
+        self.__train_history.store(training_metric_results, epoch=self.__current_epoch)
 
         for data_set in data_sets:
             metric_results = self.__metrics_evaluator.compute_metrics(data_set)
             metric_results.prefix(data_set.name)
             self.__train_history.store(metric_results, epoch=self.__current_epoch)
 
-        return validation_metric_results
+        return validation_metric_results, training_metric_results
 
     def __print_epoch_info(self) -> None:
         last_metric_results = self.__train_history.history[self.__current_epoch]
