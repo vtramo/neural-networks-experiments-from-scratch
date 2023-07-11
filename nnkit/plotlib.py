@@ -1,4 +1,5 @@
 from nnkit.training.neurotrain import TrainingHistory
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pickle
@@ -8,6 +9,7 @@ def load_histories_from_file(path: str) -> list[TrainingHistory]:
     with open(path, 'rb') as file:
         histories = pickle.load(file)
     return histories
+
 
 def save_histories_to_file(histories: list[TrainingHistory], path: str):
     with open(path, 'wb') as file:
@@ -20,7 +22,6 @@ def plot_training_history(
     show_plot: bool = True,
     path: str = ''
 ):
-
     def must_be_plotted(metric_name: str) -> bool:
         return metrics is None or metric_name in metrics
 
@@ -58,18 +59,18 @@ def plot_training_histories(
 ):
     metric_values_by_name = {}
     epochs = np.arange(1, train_histories[0].epochs + 1)
-    
+
     for train_history in train_histories:
         for _ in train_history.history:
             for metric_name, metrics in _.items():
                 if metric_name == metric:
                     new_metric_name = f'{train_history.update_rule}_{metric_name}'
-                    metric_values_by_name.setdefault(new_metric_name, []) 
+                    metric_values_by_name.setdefault(new_metric_name, [])
                     metric_values_by_name[new_metric_name].append(metrics.result())
 
     for metric_name, metric_values in metric_values_by_name.items():
-            print(metric_name, metric_values)
-            plt.plot(epochs, metric_values, '-', label=metric_name, lw=1.2)
+        print(metric_name, metric_values)
+        plt.plot(epochs, metric_values, '-', label=metric_name, lw=1.2)
 
     plt.xticks(epochs)
     plt.xlabel('Epochs', color='black')
