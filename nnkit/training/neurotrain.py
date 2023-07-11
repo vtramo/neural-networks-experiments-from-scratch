@@ -16,9 +16,9 @@ import numpy as np
 
 @dataclass(slots=True, frozen=True)
 class TrainingData:
-    gradients: np.ndarray
-    parameters: np.ndarray
-    val_loss: float
+    gradients: np.ndarray = None
+    parameters: np.ndarray = None
+    val_loss: float = None
     train_loss: float = None
 
 
