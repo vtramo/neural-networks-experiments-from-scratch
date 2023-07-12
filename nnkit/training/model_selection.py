@@ -13,10 +13,16 @@ class KFold:
 
     class KFoldGenerator:
 
-        def __init__(self, k: int, points_folds: list[np.ndarray], labels_folds: list[np.ndarray]):
+        def __init__(
+            self, k: int,
+            points_folds: list[np.ndarray],
+            labels_folds: list[np.ndarray],
+            train_batch_size: int
+        ):
             self.points_folds = points_folds
             self.labels_folds = labels_folds
             self.k = k
+            self.train_batch_size = train_batch_size
             self.__index = self.k-1
 
         def __iter__(self) -> self.KFoldGenerator:
@@ -38,13 +44,13 @@ class KFold:
             train_labels = np.concatenate(left_labels_folds + right_labels_folds)
 
             self.__index -= 1
-            train_set = DataLabelSet(train_points, train_labels, name='training', batch_size=len(train_points))
+            train_set = DataLabelSet(train_points, train_labels, name='training', batch_size=self.train_batch_size)
             test_set = DataLabelSet(test_points, test_labels, name='test', batch_size=len(test_points))
             return train_set, test_set
     
     def __call__(self, dataset: DataLabelSet) -> KFoldGenerator:
         points_folds, labels_folds = dataset.fair_divide(self.k)
-        generator = self.KFoldGenerator(self.k, points_folds, labels_folds)
+        generator = self.KFoldGenerator(self.k, points_folds, labels_folds, dataset.batch_size)
         return generator
 
 
