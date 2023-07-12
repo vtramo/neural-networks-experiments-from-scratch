@@ -108,7 +108,25 @@ class AbstractRProp(UpdateRule, metaclass=ABCMeta):
         pass
 
 
-class RProp(AbstractRProp):
+class RPropMinus(AbstractRProp):
+
+    def _compute_delta_parameter(self, indexes: tuple[int, int, int]) -> float:
+        (i, j, k) = indexes
+        return -self._gradients_sign[i][j][k] * self._stepsizes[i][j][k]
+
+
+class IRPropMinus(RPropMinus):
+
+    def _compute_delta_parameter(self, indexes: tuple[int, int, int]) -> float:
+        (i, j, k) = indexes
+
+        if self._gradients_change is not None and self._gradients_change[i][j][k] < 0:
+            self._prev_gradients[i][j][k] = 0
+
+        return -self._gradients_sign[i][j][k] * self._stepsizes[i][j][k]
+
+
+class RPropPlus(AbstractRProp):
 
     def __init__(
         self,
@@ -134,59 +152,6 @@ class RProp(AbstractRProp):
 
         self._prev_gradients = 0
         return -self._delta_parameters[i][j][k]
-
-
-class RPropMinus(AbstractRProp):
-
-    def _compute_delta_parameter(self, indexes: tuple[int, int, int]) -> float:
-        (i, j, k) = indexes
-        return -self._gradients_sign[i][j][k] * self._stepsizes[i][j][k]
-
-
-class IRPropMinus(RPropMinus):
-
-    def _compute_delta_parameter(self, indexes: tuple[int, int, int]) -> float:
-        (i, j, k) = indexes
-
-        if self._gradients_change is not None and self._gradients_change[i][j][k] < 0:
-            self._prev_gradients[i][j][k] = 0
-
-        return -np.sign(self._gradients_sign[i][j][k]) * self._stepsizes[i][j][k]
-
-
-class RPropPlus(AbstractRProp):
-
-    def __init__(
-        self,
-        initial_step_size: float = 0.01,
-        increase_factor: float = 1.2,
-        decrease_factor: float = 0.5,
-        min_step_size: float = 1e-6,
-        max_step_size: float = 50,
-        name: str = ""
-    ):
-        super().__init__(initial_step_size, increase_factor, decrease_factor, min_step_size, max_step_size, name)
-        self._prev_delta_parameters = None
-
-    def _compute_delta_parameters(self) -> np.ndarray:
-        if self._prev_delta_parameters is None:
-            self._prev_delta_parameters = numpy_deep_zeros_like(self._stepsizes)
-
-        delta_parameters = super()._compute_delta_parameters()
-        self._prev_delta_parameters = delta_parameters
-
-        return delta_parameters
-
-    def _compute_delta_parameter(self, indexes: tuple[int, int, int]) -> float:
-        (i, j, k) = indexes
-
-        if self._gradients_change is not None and self._gradients_change[i][j][k] < 0:
-            delta_parameter = -self._prev_delta_parameters[i][j][k]
-            self._prev_gradients[i][j][k] = 0
-        else:
-            delta_parameter = -np.sign(self._gradients_sign[i][j][k]) * self._stepsizes[i][j][k]
-
-        return delta_parameter
 
 
 class IRPropPlus(RPropPlus):
@@ -215,12 +180,12 @@ class IRPropPlus(RPropPlus):
 
         if self._gradients_change is not None and self._gradients_change[i][j][k] < 0:
             if self._loss > self._prev_loss:
-                delta_parameter = -self._prev_delta_parameters[i][j][k]
+                delta_parameter = -self._delta_parameters[i][j][k]
             else:
                 delta_parameter = 0
             self._prev_gradients[i][j][k] = 0
         else:
-            delta_parameter = -np.sign(self._gradients_sign[i][j][k]) * self._stepsizes[i][j][k]
+            delta_parameter = -self._gradients_sign[i][j][k] * self._stepsizes[i][j][k]
 
         return delta_parameter
 

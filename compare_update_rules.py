@@ -21,8 +21,8 @@ if __name__ == '__main__':
     # Load data / Data pre-processing
     (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
     train_images = train_images.reshape((60000, 28 * 28))
-    train_images = (train_images.astype('float32') / 255)[:sample_size]
-    train_labels = one_hot(train_labels)[:sample_size]
+    train_images = (train_images.astype('float32') / 255)[:100]
+    train_labels = one_hot(train_labels)[:100]
     test_images = test_images.reshape((10000, 28 * 28))
     test_images = test_images.astype('float32') / 255
     test_labels = one_hot(test_labels)
@@ -33,7 +33,7 @@ if __name__ == '__main__':
 
     histories = []
 
-    for update_rule in [RPropPlus(), IRPropPlus()]:
+    for update_rule in [IRPropPlus()]:
         trainer = NetworkTrainer(
             net=net,
             update_rule=update_rule,
