@@ -1,5 +1,5 @@
 from nnkit.core.neuronet import DenseLayer, DenseNetwork
-from nnkit.core.activations import Softmax, ReLU
+from nnkit.core.activations import Softmax, ReLU, Sigmoid
 from nnkit.core.losses import CrossEntropySoftmax
 from nnkit.datasets import mnist
 from nnkit.datasets.utils import DataLabelSet, one_hot
@@ -11,8 +11,8 @@ from nnkit.training.metrics import Accuracy
 if __name__ == '__main__':
     # Build Network
     net = DenseNetwork(
-        DenseLayer(num_inputs=784, num_neurons=500, activation_function=ReLU()),
-        DenseLayer(num_neurons=200, activation_function=ReLU()),
+        DenseLayer(num_inputs=784, num_neurons=64, activation_function=Sigmoid()),
+        DenseLayer(num_neurons=32, activation_function=Sigmoid()),
         DenseLayer(num_neurons=10, activation_function=Softmax())
     )
 
