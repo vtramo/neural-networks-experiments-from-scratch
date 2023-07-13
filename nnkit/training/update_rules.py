@@ -150,7 +150,7 @@ class RPropPlus(AbstractRProp):
         if self._gradients_change is None or self._gradients_change[i][j][k] >= 0:
             return -self._gradients_sign[i][j][k] * self._stepsizes[i][j][k]
 
-        self._prev_gradients = 0
+        self._prev_gradients = numpy_deep_zeros_like(self._prev_gradients)
         return -self._delta_parameters[i][j][k]
 
 
