@@ -26,6 +26,15 @@ class Sigmoid(ActivationFunction):
     def derivative(self, a: float) -> float:
         sigma_a = self(a)
         return sigma_a * (1 - sigma_a)
+    
+class Tanh(ActivationFunction):
+
+    def __call__(self, a: float) -> float:
+        return np.tanh(a)
+
+    def derivative(self, a: float) -> float:
+        tanh_a = self(a)
+        return 1 - tanh_a ** 2
 
 
 class Identity(ActivationFunction):

@@ -1,5 +1,5 @@
 from nnkit import DenseNetwork, DenseLayer
-from nnkit.core.activations import ReLU, Softmax, Sigmoid
+from nnkit.core.activations import ReLU, Softmax, Sigmoid, Tanh
 
 from datetime import date
 
@@ -11,6 +11,8 @@ def read_activation_functions(activation_function: str):
         return Softmax()
     elif activation_function == 'sigmoid':
         return Sigmoid()
+    elif activation_function == 'tanh':
+        return Tanh()
     else:
         raise ValueError('Invalid activation function')
 
