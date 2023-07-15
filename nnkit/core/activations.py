@@ -17,16 +17,18 @@ class ActivationFunction(object, metaclass=ABCMeta):
 
 class Sigmoid(ActivationFunction):
 
-    def __call__(self, a: float) -> float:
-        if a >= 0:
-            return 1 / (1 + np.exp(-a))
-        else:
-            return np.exp(a) / (1 + np.exp(a))
+    def __call__(self, a: np.ndarray) -> np.ndarray:
+        return np.where(
+            a >= 0,
+            1 / (1 + np.exp(-a)),
+            np.exp(a) / (1 + np.exp(a))
+        )
 
-    def derivative(self, a: float) -> float:
+    def derivative(self, a: np.ndarray) -> np.ndarray:
         sigma_a = self(a)
         return sigma_a * (1 - sigma_a)
-    
+
+
 class Tanh(ActivationFunction):
 
     def __call__(self, a: float) -> float:
@@ -39,11 +41,11 @@ class Tanh(ActivationFunction):
 
 class Identity(ActivationFunction):
 
-    def __call__(self, a: float) -> float:
+    def __call__(self, a: np.ndarray) -> np.ndarray:
         return a
 
-    def derivative(self, a: float) -> float:
-        return 1
+    def derivative(self, a: np.ndarray) -> np.ndarray:
+        return np.full_like(a, 1)
 
 
 class Softmax(ActivationFunction):
@@ -53,17 +55,17 @@ class Softmax(ActivationFunction):
         exp_a = np.exp(a)
         return exp_a / np.sum(exp_a)
 
-    def derivative(self, a: float) -> float:
+    def derivative(self, a: np.ndarray) -> np.ndarray:
         raise NotImplementedError
 
 
 class ReLU(ActivationFunction):
 
-    def __call__(self, a: float) -> float:
+    def __call__(self, a: np.ndarray) -> np.ndarray:
         return max(0.0, a)
 
-    def derivative(self, a: float) -> float:
-        if a == 0:
+    def derivative(self, a: np.ndarray) -> np.ndarray:
+        if 0 in a:
             raise ArithmeticError("The derivative of the ReLU function is not defined at a=0")
 
-        return 0 if a < 0 else 1
+        return np.where(a < 0, 0, 1)

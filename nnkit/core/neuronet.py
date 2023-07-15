@@ -3,23 +3,6 @@ from nnkit.core.losses import LossFunction
 import numpy as np
 
 
-class Neuron:
-
-    def __init__(self, activation_function: ActivationFunction = Identity()):
-        self.__activation_function = activation_function
-
-    def __call__(self, x: np.ndarray, w: np.ndarray) -> float:
-        a = np.dot(x, w)
-        z = self.__activation_function(a)
-        return z
-    
-    def training_output(self, x: np.ndarray, w: np.ndarray) -> tuple[float, float]:
-        a = np.dot(x, w)
-        z = self.__activation_function(a)
-        d = self.__activation_function.derivative(a)
-        return z, d
-
-
 class DenseLayer:
 
     def __init__(
@@ -29,14 +12,14 @@ class DenseLayer:
         activation_function: ActivationFunction = Identity()
     ):
         is_softmax = isinstance(activation_function, Softmax)
-        self.__activation_function = Identity() if is_softmax else activation_function
+        self.activation_function = Identity() if is_softmax else activation_function
         self.__post_processing = activation_function if is_softmax else Identity()
-        self.__neurons = [Neuron(self.__activation_function) for _ in range(0, num_neurons)]
+        self.__num_neurons = num_neurons
         self.__weights = self.initialize_weights(num_inputs) if num_inputs is not None else None
 
-    def initialize_weights(self, num_inputs: int) -> np.ndarray:
-        self.__weights = np.random.normal(size=(self.num_neurons, num_inputs + 1)) * 0.001
-        return self.__weights
+    @property
+    def num_neurons(self) -> int:
+        return self.__num_neurons
 
     @property
     def weights(self) -> np.ndarray:
@@ -49,12 +32,12 @@ class DenseLayer:
     def weights(self, weights: np.ndarray):
         self.__weights = weights
 
+    def initialize_weights(self, num_inputs: int) -> np.ndarray:
+        self.__weights = np.random.normal(size=(self.num_neurons, num_inputs + 1)) * 0.001
+        return self.__weights
+
     def are_weights_initialised(self) -> bool:
         return self.__weights is not None
-
-    @property
-    def num_neurons(self) -> int:
-        return len(self.__neurons)
 
     def __call__(self, inputs: np.ndarray) -> np.ndarray:
         if not self.are_weights_initialised():
@@ -65,22 +48,17 @@ class DenseLayer:
     def __forward_pass(self, inputs: np.ndarray) -> np.ndarray:
         inputs = np.concatenate(([1], inputs))
 
-        output = np.array([
-            neuron(inputs, self.weights[i])
-            for i, neuron in enumerate(self.__neurons)
-        ])
+        a = np.matmul(self.weights, inputs)
+        z = self.activation_function(a)
 
-        return self.__post_processing(output)
+        return self.__post_processing(z)
 
     def training_forward_pass(self, inputs: np.ndarray) -> dict[str, np.ndarray]:
         inputs = np.concatenate(([1], inputs))
 
-        z = np.zeros(self.num_neurons)
-        d = np.zeros(self.num_neurons)
-        for i, neuron in enumerate(self.__neurons):
-            neuron_output = neuron.training_output(inputs, self.weights[i])
-            z[i] = neuron_output[0]
-            d[i] = neuron_output[1]
+        a = np.matmul(self.weights, inputs)
+        z = self.activation_function(a)
+        d = self.activation_function.derivative(a)
 
         return {'z': self.__post_processing(z), 'd': d}
 
