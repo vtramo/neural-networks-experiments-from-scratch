@@ -161,7 +161,7 @@ class DenseNetwork:
         gradients = np.zeros(self.parameters.shape, dtype=object)
 
         for point, label in zip(points, labels):
-            gradients += self.backprop(loss, point, label)
+            gradients += self.backprop_onecycle(loss, point, label)
 
         return gradients
 
@@ -205,4 +205,40 @@ class DenseNetwork:
             gradients[index_layer] = gradients_curr_layer
 
         return gradients
-        
+
+    def backprop_onecycle(self, loss_function: LossFunction, point: np.ndarray, label: np.ndarray) -> np.ndarray:
+        net_output = self.training_forward_pass(point)
+
+        # Delta Output layer
+        net_output_last_layer = net_output[-1]
+        output_last_layer = net_output_last_layer['z']
+        der_actfun_last_layer = net_output_last_layer['d']
+        der_lossfun = loss_function.output_derivative(output_last_layer, label)
+        delta_last_layer = der_lossfun * der_actfun_last_layer
+
+        # Compute gradients + Compute Delta Hidden Layers
+        gradients = np.zeros(self.parameters.shape, dtype=object)
+        delta_layers = np.zeros(self.depth, dtype=object)
+        delta_layers[self.depth - 1] = delta_last_layer
+        for index_layer in reversed(range(0, self.depth)):
+            parameters_curr_layer = self.parameters[index_layer]
+
+            # remove bias
+            weights_curr_layer = np.array([
+                parameters_curr_layer[i][1:]
+                for i in range(0, len(parameters_curr_layer))
+            ])
+
+            output_prev_layer = net_output[index_layer - 1]['z'] if index_layer != 0 else point
+            delta_curr_layer = np.tile(delta_layers[index_layer], (output_prev_layer.shape[0], 1))
+            gradient_weights = output_prev_layer * delta_curr_layer.transpose()
+            gradient_biases = delta_layers[index_layer]
+            gradients[index_layer] = np.array([
+                np.concatenate(([gradient_bias], neuron_gradient_weights))
+                for neuron_gradient_weights, gradient_bias in zip(gradient_weights, gradient_biases)
+            ])
+            if index_layer != 0:
+                der_actfun_prev_layer = net_output[index_layer - 1]['d']
+                delta_layers[index_layer - 1] = der_actfun_prev_layer * np.matmul(weights_curr_layer.transpose(), delta_layers[index_layer])
+
+        return gradients
