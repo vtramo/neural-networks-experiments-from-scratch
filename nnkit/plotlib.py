@@ -59,11 +59,11 @@ def plot_training_history(
     plt.title(train_history.update_rule if not title else title)
     plt.legend()
 
-    if show_plot:
-        plt.show()
-
     if path:
         plt.savefig(path)
+
+    if show_plot:
+        plt.show()
 
 
 def plot_training_histories(
@@ -100,8 +100,8 @@ def plot_training_histories(
     plt.title(f'{metric} across Training' if not title else title)
     plt.legend()
 
-    if show_plot:
-        plt.show()
-
     if path:
         plt.savefig(path)
+
+    if show_plot:
+        plt.show()
