@@ -20,7 +20,10 @@ def plot_training_history(
     train_history: TrainingHistory,
     metrics: set[str] = None,
     show_plot: bool = True,
-    path: str = ''
+    path: str = '',
+    title: str = '',
+    xlabel: str = '',
+    ylabel: str = ''
 ):
     def must_be_plotted(metric_name: str) -> bool:
         return metrics is None or metric_name in metrics
@@ -35,13 +38,19 @@ def plot_training_history(
             metric_values.append(metric.result())
 
     epochs = np.arange(1, train_history.epochs + 1)
+
+    ax = plt.axes()
+    ax.set_xlim(0, max(epochs))
+    ax.set_ylim(0, 1)
+    ax.grid(linestyle='--')
+
     for metric_name, metric_values in metric_values_by_name.items():
         plt.plot(epochs, metric_values, '-', label=metric_name, lw=1.2)
 
-    plt.xticks(epochs)
-    plt.xlabel('Epochs', color='black')
-    plt.ylabel('Metrics', color='black')
-    plt.title(train_history.update_rule)
+    plt.xticks(np.arange(min(epochs)-1, max(epochs)+1, 10))
+    plt.xlabel('Epochs' if not xlabel else xlabel, color='black')
+    plt.ylabel('Metrics' if not ylabel else ylabel, color='black')
+    plt.title(train_history.update_rule if not title else title)
     plt.legend()
 
     if show_plot:
@@ -55,7 +64,10 @@ def plot_training_histories(
     train_histories: list[TrainingHistory],
     metric: str,
     show_plot: bool = True,
-    path: str = ''
+    path: str = '',
+    title: str = '',
+    xlabel: str = '',
+    ylabel: str = ''
 ):
     metric_values_by_name = {}
     epochs = np.arange(1, train_histories[0].epochs + 1)
@@ -68,14 +80,18 @@ def plot_training_histories(
                     metric_values_by_name.setdefault(new_metric_name, [])
                     metric_values_by_name[new_metric_name].append(metrics.result())
 
+    ax = plt.axes()
+    ax.set_xlim(0, max(epochs))
+    ax.set_ylim(0, 1)
+    ax.grid(linestyle='--')
+
     for metric_name, metric_values in metric_values_by_name.items():
-        print(metric_name, metric_values)
         plt.plot(epochs, metric_values, '-', label=metric_name, lw=1.2)
 
-    plt.xticks(epochs)
-    plt.xlabel('Epochs', color='black')
-    plt.ylabel(metric, color='black')
-    plt.title(f'{metric} across Training')
+    plt.xticks(np.arange(min(epochs)-1, max(epochs)+1, 10))
+    plt.xlabel('Epochs' if not xlabel else xlabel, color='black')
+    plt.ylabel(metric if not ylabel else ylabel, color='black')
+    plt.title(f'{metric} across Training' if not title else title)
     plt.legend()
 
     if show_plot:
