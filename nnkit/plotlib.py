@@ -5,6 +5,12 @@ import numpy as np
 import pickle
 
 
+def load_histories_from_files(paths: list[str]) -> list[TrainingHistory]:
+    histories = []
+    for path in paths:
+        histories.extend(load_histories_from_file(path))
+    return histories
+
 def load_histories_from_file(path: str) -> list[TrainingHistory]:
     with open(path, 'rb') as file:
         histories = pickle.load(file)
