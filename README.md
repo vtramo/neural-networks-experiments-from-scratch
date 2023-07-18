@@ -6,20 +6,19 @@ This repository contains code for creating and training neural networks using on
 
 ```python
 from nnkit.core.neuronet import DenseLayer, DenseNetwork
-from nnkit.core.activations import Softmax, ReLU
+from nnkit.core.activations import Softmax, ReLU, Sigmoid, Tanh
 from nnkit.core.losses import CrossEntropySoftmax
 from nnkit.datasets import mnist
 from nnkit.datasets.utils import DataLabelSet, one_hot
 from nnkit.training.neurotrain import NetworkTrainer
 from nnkit.training.update_rules import SGD, RPropPlus, IRPropPlus, RPropMinus, IRPropMinus
 from nnkit.training.stopping import GLStoppingCriterion
-from nnkit.training.metrics import Accuracy
+from nnkit.training.metrics import Accuracy, MetricsEvaluator
 
 if __name__ == '__main__':
     # Build Network
     net = DenseNetwork(
-        DenseLayer(num_inputs=784, num_neurons=500, activation_function=ReLU()),
-        DenseLayer(num_neurons=200, activation_function=ReLU()),
+        DenseLayer(num_inputs=784, num_neurons=256, activation_function=Tanh()),
         DenseLayer(num_neurons=10, activation_function=Softmax())
     )
 
@@ -33,9 +32,9 @@ if __name__ == '__main__':
     test_labels = one_hot(test_labels)
 
     # Training data / Validation data
-    training_set = DataLabelSet(train_images, train_labels, batch_size=1, name='training')
+    training_set = DataLabelSet(train_images, train_labels, batch_size=len(train_images), name='training')
     training_set, validation_set = training_set.split(
-        split_factor=0.3,
+        split_factor=0.2,
         split_set_batch_size=len(train_images),
         split_set_name='validation'
     )
@@ -43,11 +42,16 @@ if __name__ == '__main__':
     # Train the network
     trainer = NetworkTrainer(
         net=net,
-        update_rule=SGD(learning_rate=0.1, momentum=0.9),
+        update_rule=IRPropPlus(),
         loss_function=CrossEntropySoftmax(),
-        metrics=[Accuracy()],
-        multiprocessing=False
+        metrics=[Accuracy()]
     )
 
-    history = trainer.train_network(training_set, validation_set, epochs=150, early_stopping=GLStoppingCriterion(alpha=1))
+    history = trainer.train_network(training_set, validation_set, epochs=30)
+
+    # Test the network
+    test_set = DataLabelSet(test_images, test_labels, batch_size=len(test_images), name='test')
+    evaluator = MetricsEvaluator(net, metrics=[Accuracy()], loss_function=CrossEntropySoftmax())
+    metrics = evaluator.compute_metrics(test_set)
+    print(metrics)
 ```
