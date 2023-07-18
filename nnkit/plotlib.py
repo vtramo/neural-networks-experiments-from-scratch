@@ -22,6 +22,12 @@ def save_histories_to_file(histories: list[TrainingHistory], path: str):
     with open(path, 'wb') as file:
         pickle.dump(histories, file)
 
+def save_parameters_to_file(parameters: np.ndarray, path: str):
+    np.save(path, parameters)
+
+def load_parameters_from_file(path: str) -> np.ndarray:
+    return np.load(path, allow_pickle=True)
+
 
 def plot_training_history(
     train_history: TrainingHistory,
