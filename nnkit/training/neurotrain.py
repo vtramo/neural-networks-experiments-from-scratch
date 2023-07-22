@@ -108,7 +108,7 @@ class NetworkTrainer:
                 print("Stopped early!")
                 break
 
-        self.__net.parameters = self.__best_parameters.parameters
+        self.__net.parameters = copy.deepcopy(self.__best_parameters.parameters)
         history = self.__train_history
         self.__reset_trainer()
         return history
@@ -176,7 +176,7 @@ class NetworkTrainer:
         if self.__last_val_loss >= self.__best_parameters.loss:
             return
 
-        self.__best_parameters.parameters = self.__net.parameters
+        self.__best_parameters.parameters = copy.deepcopy(self.__net.parameters)
         self.__best_parameters.metric_results = val_metric_results
         self.__best_parameters.loss = self.__last_val_loss
         self.__best_parameters.epoch = self.__current_epoch
