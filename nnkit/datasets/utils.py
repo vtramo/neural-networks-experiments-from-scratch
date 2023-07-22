@@ -9,6 +9,14 @@ def one_hot(labels, tot_classes=10):
     return np.array([(base == label) * 1 for label in labels])
 
 
+def multi_hot(sequences: list[list], dimension: int = 10000):
+    results = np.zeros((len(sequences), dimension))
+    for i, sequence in enumerate(sequences):
+        for j in sequence:
+            results[i, j] = 1
+    return results
+
+
 def fair_divide(*iterables: list, workers: int) -> list[list]:
     if len(iterables) == 0:
         return []
@@ -39,7 +47,7 @@ class DataLabelSet:
         self._points = points
         self._labels = labels
         self.name = name
-        self.batch_size = batch_size
+        self.batch_size = batch_size if batch_size <= len(points) else len(points)
         self.steps = math.ceil(len(points) / batch_size)
 
     def get(self) -> tuple[np.ndarray, np.ndarray]:
@@ -76,19 +84,19 @@ class DataLabelSet:
         split_set_batch_size: int = None,
         split_set_name: str = ""
     ) -> tuple[DataLabelSet, DataLabelSet]:
-        split_index = int(len(self) * split_factor)
+        split_index = len(self) - int(len(self) * split_factor)
 
         left_dataset = DataLabelSet(
-            self._points[split_index:],
-            self._labels[split_index:],
+            self._points[:split_index],
+            self._labels[:split_index],
             name=self.name,
             batch_size=self.batch_size
         )
 
         split_set_batch_size = split_set_batch_size if split_set_batch_size is not None else self.batch_size
         right_dataset = DataLabelSet(
-            self._points[:split_index],
-            self._labels[:split_index],
+            self._points[split_index:],
+            self._labels[split_index:],
             name=split_set_name,
             batch_size=split_set_batch_size
         )
