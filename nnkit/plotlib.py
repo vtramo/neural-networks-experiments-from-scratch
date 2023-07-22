@@ -52,6 +52,7 @@ def plot_training_history(
 
     epochs = np.arange(1, train_history.epochs + 1)
 
+    plt.clf()
     ax = plt.axes()
     ax.set_xlim(0, max(epochs))
     ax.set_ylim(0, 1)
@@ -96,6 +97,7 @@ def plot_training_histories(
                     max_metric_results = max(metric_result, max_metric_results)
                     metric_values_by_name[new_metric_name].append(metric_result)
 
+    plt.clf()
     ax = plt.axes()
     ax.set_xlim(0, max(epochs))
     ax.set_ylim(0, max_metric_results + 0.1)
